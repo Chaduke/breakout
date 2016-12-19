@@ -9,10 +9,9 @@ namespace breakout
         public Vector2 Position;
         public Vector2 Speed;
 
-        public void Initialize(Texture2D texture, Vector2 position)
+        public void Initialize(Texture2D texture)
         {
-            Texture = texture;
-            Position = position;
+            Texture = texture;            
         }
 
         public void Update()
