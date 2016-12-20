@@ -101,6 +101,7 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="Ball.cs" />
+    <Compile Include="Block.cs" />
     <Compile Include="GamePage.xaml.cs">
       <DependentUpon>GamePage.xaml</DependentUpon>
     </Compile>
@@ -118,8 +119,10 @@
     <None Include="breakout_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Content\Graphics\ball1.png" />
-    <Content Include="Content\Graphics\paddle1.png" />
+    <Content Include="Content\Graphics\background.png" />
+    <Content Include="Content\Graphics\ball_3d.png" />
+    <Content Include="Content\Graphics\block_3d.png" />
+    <Content Include="Content\Graphics\paddle_3d.png" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />

@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace breakout
 {
@@ -14,10 +16,14 @@ namespace breakout
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         Paddle paddle;       
-        Ball[] balls;
+        List<Ball> balls;
+        List<Ball> ballremove;
+
+        List<Block> blocks;
+        List<Block> blockremove;
+
         int ballcount;
-        Random r;
-        public const int maxballs = 10;
+        Random r;        
 
         // Keyboard states used to determine key presses
         KeyboardState currentKeyboardState;
@@ -30,6 +36,8 @@ namespace breakout
         //Mouse states used to track Mouse button press
         MouseState currentMouseState;
         MouseState previousMouseState;
+
+        Texture2D background;
 
         // A movement speed for the paddle
         float paddleMoveSpeed;
@@ -49,20 +57,42 @@ namespace breakout
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            graphics.PreferredBackBufferWidth = 800;  // set this value to the desired width of your window
+            graphics.PreferredBackBufferHeight = 600;   // set this value to the desired height of your window
+            graphics.ApplyChanges();
+
+            
             paddle = new Paddle();
             paddleMoveSpeed = 8.0f;
             ballcount = 5;
             r = new Random();
-            balls = new Ball[maxballs];
+            balls = new List<Ball>();
+            ballremove = new List<Ball>();
 
-            for (int i = 0; i < ballcount; i++)
+            blocks = new List<Block>();
+            blockremove = new List<Block>();
+
+            int i=0;
+            while (i < ballcount)
             {
-                balls[i] = new Ball();               
-                balls[i].Speed.X = r.Next(1, 3);
-                balls[i].Speed.Y = r.Next(1, 3);
-                balls[i].Position.X = r.Next(0, GraphicsDevice.Viewport.Width);
-                balls[i].Position.Y = r.Next(0, GraphicsDevice.Viewport.Height);                
-            }           
+                Ball b = new Ball();                            
+                b.Speed.X = r.Next(3, 7);
+                b.Speed.Y = r.Next(3, 7);
+                b.Position.X = r.Next(0, GraphicsDevice.Viewport.Width);
+                b.Position.Y = 0;
+                balls.Add(b);
+                i++;         
+            }
+            i = 0;
+            while (i < 7)
+            {
+                Block b = new Block();
+                b.Position.X = (112 * i) + 10;
+                b.Position.Y = 100;
+                blocks.Add(b);
+                i ++;
+            }
+
 
             //Enable the FreeDrag gesture.
             TouchPanel.EnabledGestures = GestureType.FreeDrag;
@@ -78,14 +108,19 @@ namespace breakout
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here    
+            // TODO: use this.Content to load your game content here
+            background = Content.Load<Texture2D>("Graphics\\background");
             Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
-            paddle.Initialize(Content.Load<Texture2D>("Graphics\\paddle1"), paddlePosition);
-            for (int i = 0; i < ballcount; i++)
+            paddle.Initialize(Content.Load<Texture2D>("Graphics\\paddle_3d"), paddlePosition);
+            foreach (Ball b in balls)
             {
-                balls[i].Initialize(Content.Load<Texture2D>("Graphics\\ball1"));
+                b.Initialize(Content.Load<Texture2D>("Graphics\\ball_3d"));
             }
-           
+            foreach (Block b in blocks)
+            {
+                b.Initialize(Content.Load<Texture2D>("Graphics\\block_3d"));
+            }
+
         }
 
         /// <summary>
@@ -127,49 +162,62 @@ namespace breakout
 
         private void CollisionCheck()
         {
-            for (int i = 0; i < ballcount; i++)
+            
+            foreach (Ball b in balls)
             {
-                if (balls[i].Position.X + balls[i].Texture.Width > paddle.Position.X && balls[i].Position.X < paddle.Position.X + paddle.Texture.Width &&
-                    balls[i].Position.Y > paddle.Position.Y - balls[i].Texture.Height)
+                if (b.Position.X + b.Texture.Width > paddle.Position.X && b.Position.X < paddle.Position.X + paddle.Texture.Width &&
+                    b.Position.Y > paddle.Position.Y - b.Texture.Height)
                 {
-                    balls[i].Position.Y = paddle.Position.Y - balls[i].Texture.Height;
-                    balls[i].Speed.Y = -balls[i].Speed.Y;
+                    b.Position.Y = paddle.Position.Y - b.Texture.Height;
+                    b.Speed.Y = -b.Speed.Y;
                 }
             }
         }
 
         private void UpdateBalls(GameTime gameTime)
         {
-            for (int i = 0; i < ballcount; i++)
+            try
             {
-                balls[i].Position.X += balls[i].Speed.X;
-                balls[i].Position.Y += balls[i].Speed.Y;
-                if (balls[i].Position.X > GraphicsDevice.Viewport.Width - balls[i].Texture.Width)
+                foreach (Ball b in balls)
                 {
-                    // bounce off right wall
-                    balls[i].Speed.X = -balls[i].Speed.X;
-                    balls[i].Position.X = GraphicsDevice.Viewport.Width - balls[i].Texture.Width;
-                }
-                if (balls[i].Position.X < 0)
-                {
-                    // bounce off left wall
-                    balls[i].Speed.X = -balls[i].Speed.X;
-                    balls[i].Position.X = 0;
-                }
-                if (balls[i].Position.Y > GraphicsDevice.Viewport.Height - balls[i].Texture.Height)
-                {
-                    // hit the floor
-                    balls[i].Position.Y = 0;
-                }
-                if (balls[i].Position.Y < 0)
-                {
-                    // bounce off top wall
-                    balls[i].Speed.Y = -balls[i].Speed.Y;
-                    balls[i].Position.Y = 0;
+                    b.Position.X += b.Speed.X;
+                    b.Position.Y += b.Speed.Y;
+                    if (b.Position.X > GraphicsDevice.Viewport.Width - b.Texture.Width)
+                    {
+                        // bounce off right wall
+                        b.Speed.X = -b.Speed.X;
+                        b.Position.X = GraphicsDevice.Viewport.Width - b.Texture.Width;
+                    }
+                    if (b.Position.X < 0)
+                    {
+                        // bounce off left wall
+                        b.Speed.X = -b.Speed.X;
+                        b.Position.X = 0;
+                    }
+                    if (b.Position.Y > GraphicsDevice.Viewport.Height - b.Texture.Height)
+                    {
+                        // hit the floor
+                        ballremove.Add(b);
+                        continue;
+                    }
+                    if (b.Position.Y < 0)
+                    {
+                        // bounce off top wall
+                        b.Speed.Y = -b.Speed.Y;
+                        b.Position.Y = 0;
+                    }
                 }
             }
-            
-        }
+            catch(Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+
+            }
+            foreach(Ball b in ballremove)
+            {
+                balls.Remove(b);
+            }
+        }                
 
         private void UpdatePaddle(GameTime gameTime)
         {
@@ -198,8 +246,9 @@ namespace breakout
                 paddle.Position.Y += paddleMoveSpeed;
             }
 
-            // paddle.Position.X = currentMouseState.X;
+            paddle.Position.X = currentMouseState.X;
             // paddle.Position.Y = currentMouseState.Y;
+
             // Make sure that the paddle does not go out of bounds
             paddle.Position.X = MathHelper.Clamp(paddle.Position.X, 0, GraphicsDevice.Viewport.Width - paddle.Texture.Width);
             paddle.Position.Y = MathHelper.Clamp(paddle.Position.Y, GraphicsDevice.Viewport.Height - (GraphicsDevice.Viewport.Height / 4), GraphicsDevice.Viewport.Height  - (paddle.Texture.Height * 2));
@@ -211,15 +260,20 @@ namespace breakout
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            // GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
+            spriteBatch.Draw(background, new Vector2(0,0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             paddle.Draw(spriteBatch);
-            for (int i = 0; i < ballcount; i++)
+            foreach (Ball b in balls)
             {
-                balls[i].Draw(spriteBatch);
-            }            
+                b.Draw(spriteBatch);
+            }
+            foreach (Block b in blocks)
+            {
+                b.Draw(spriteBatch);
+            }
             spriteBatch.End();
             base.Draw(gameTime);
         }

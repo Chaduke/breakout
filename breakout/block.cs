@@ -3,15 +3,14 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace breakout
 {
-    class Ball
+    class Block
     {
         public Texture2D Texture;
         public Vector2 Position;
-        public Vector2 Speed;        
 
         public void Initialize(Texture2D texture)
         {
-            Texture = texture;           
+            Texture = texture;            
         }
 
         public void Update()
