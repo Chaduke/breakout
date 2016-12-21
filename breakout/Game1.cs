@@ -86,22 +86,55 @@ namespace breakout
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
-            background = Content.Load<Texture2D>("Graphics\\background");
-            Texture2D paddleTexture = Content.Load<Texture2D>("Graphics\\paddle_3d");
+            background = Content.Load<Texture2D>("Graphics\\background_sm");
+            Texture2D paddleTexture = Content.Load<Texture2D>("Graphics\\paddle_sm");
             Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
-            paddle = new GameObject(paddleTexture,paddlePosition);
-            GameObject ball = new GameObject(Content.Load<Texture2D>("Graphics\\ball_3d"), new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), 150), new Vector2(r.Next(3, 4), r.Next(3, 4)));
+            paddle = new GameObject(Color.White,paddleTexture,paddlePosition);
+            GameObject ball = new GameObject(Color.Yellow,Content.Load<Texture2D>("Graphics\\ball_sm"), new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(5, 7), r.Next(-7,-5)));
             balls.Add(ball);
-            Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_3d");
-            int i = 0;
-            while (i < 7)
+            Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_sm");
+            for (int row = 0; row < 8; row++)
             {
-                int x = (112 * i) + 10;
-                int y = 100;
-                GameObject block = new GameObject(blockTexture,new Vector2(x,y));               
-                blocks.Add(block);
-                i++;
-            }
+                for (int col = 0; col < 16; col++)
+                {
+                    int x = (blockTexture.Width * col);
+                    int y = 100 + (row * blockTexture.Height);
+                    Color c = new Color();
+                    switch (row)
+                    {
+                        case 0:
+                            c = Color.Red;
+                            break;
+                        case 1:
+                            c = Color.Turquoise;
+                            break;
+                        case 2:
+                            c = Color.Wheat;
+                            break;
+                        case 3:
+                            c = Color.YellowGreen;
+                            break;
+                        case 4:
+                            c = Color.Salmon;
+                            break;
+                        case 5:
+                            c = Color.PapayaWhip;
+                            break;
+                        case 6:
+                            c = Color.MediumPurple;
+                            break;
+                        case 7:
+                            c = Color.DarkOrchid;
+                            break;
+                        default:
+                            c = Color.White;
+                            break;
+                    }             
+
+                    GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
+                    blocks.Add(block);
+                }
+            }  
         }
 
         /// <summary>
@@ -159,6 +192,7 @@ namespace breakout
                     {
                         ball.Velocity.Y = -ball.Velocity.Y;
                         blockremove.Add(block);
+                        break;
                     }
                 }               
             }
