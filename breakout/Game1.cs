@@ -9,7 +9,7 @@ using System.Diagnostics;
 namespace breakout
 {
     /* TODO LIST
-     * collisions with blocks
+     * 
      * check on resizing blocks
      * sprite effects / colors
      * ball count
@@ -90,7 +90,7 @@ namespace breakout
             Texture2D paddleTexture = Content.Load<Texture2D>("Graphics\\paddle_3d");
             Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
             paddle = new GameObject(paddleTexture,paddlePosition);
-            GameObject ball = new GameObject(Content.Load<Texture2D>("Graphics\\ball_3d"), new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), 120), new Vector2(r.Next(3, 4), r.Next(3, 4)));
+            GameObject ball = new GameObject(Content.Load<Texture2D>("Graphics\\ball_3d"), new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), 150), new Vector2(r.Next(3, 4), r.Next(3, 4)));
             balls.Add(ball);
             Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_3d");
             int i = 0;
@@ -148,16 +148,23 @@ namespace breakout
             
             foreach (GameObject ball in balls)
             {
-                if (ball.Position.X + ball.Texture.Width > paddle.Position.X && ball.Position.X < paddle.Position.X + paddle.Texture.Width &&
-                    ball.Position.Y > paddle.Position.Y - ball.Texture.Height)
+                if (ball.BoundingBox.Intersects(paddle.BoundingBox))               
                 {
                     ball.Position.Y = paddle.Position.Y - ball.Texture.Height;
                     ball.Velocity.Y = -ball.Velocity.Y;
                 }
                 foreach(GameObject block in blocks)
                 {
-
-                }
+                    if (ball.BoundingBox.Intersects(block.BoundingBox))
+                    {
+                        ball.Velocity.Y = -ball.Velocity.Y;
+                        blockremove.Add(block);
+                    }
+                }               
+            }
+            foreach (GameObject block in blockremove)
+            {
+                blocks.Remove(block);
             }
         }
 
