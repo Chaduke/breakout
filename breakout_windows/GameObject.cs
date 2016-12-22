@@ -9,6 +9,9 @@ namespace breakout
         public Vector2 Position;
         public Vector2 Velocity;
         public Color RGB;
+        public int scorevalue;
+        public bool collide;
+
         public Rectangle BoundingBox
         {
             get

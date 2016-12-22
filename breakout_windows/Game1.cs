@@ -10,12 +10,12 @@ namespace breakout
 {
     /* TODO LIST
     
-     * score
      * levels    
      * embedded balls     
-     * ball angle off paddle tweaks     
-    */
-    
+     * ball angle off paddle tweaks
+     * sound and music
+     *    
+    */    
        
     public class Game1 : Game
     {
@@ -24,14 +24,13 @@ namespace breakout
         SpriteFont arial;
         GameObject paddle;
         int gamestate;
-        
+        int score;
+
         List<GameObject> balls;
         List<GameObject> ballremove;
-        int ballsleft;
 
-        List<GameObject> blocks;
-        List<GameObject> blockremove;
-         
+        int ballsleft;
+        Level level;          
         Random r;        
 
         // Keyboard states used to determine key presses
@@ -68,12 +67,16 @@ namespace breakout
             graphics.PreferredBackBufferHeight = 600;   // set this value to the desired height of your window
             graphics.ApplyChanges();
             gamestate = 0;
+            score = 0;
             r = new Random();
             balls = new List<GameObject>();
             ballremove = new List<GameObject>();
             ballsleft = 3;
-            blocks = new List<GameObject>();
-            blockremove = new List<GameObject>();  
+            level = new Level();
+            level.number = 1;
+            level.name = "Getting Started";
+            level.blocks = new List<GameObject>();
+            level.blocksremove = new List<GameObject>();  
 
             //Enable the FreeDrag gesture.
             TouchPanel.EnabledGestures = GestureType.FreeDrag;
@@ -90,51 +93,9 @@ namespace breakout
             Texture2D paddleTexture = Content.Load<Texture2D>("Graphics\\paddle_sm");
             Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
             paddle = new GameObject(Color.White,paddleTexture,paddlePosition);
-            balltexture = Content.Load<Texture2D>("Graphics\\ball_sm");            
-           
+            balltexture = Content.Load<Texture2D>("Graphics\\ball_sm");           
             Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_sm");
-            for (int row = 0; row < 8; row++)
-            {
-                for (int col = 0; col < 16; col++)
-                {
-                    int x = (blockTexture.Width * col);
-                    int y = 100 + (row * blockTexture.Height);
-                    Color c = new Color();
-                    switch (row)
-                    {
-                        case 0:
-                            c = Color.Red;
-                            break;
-                        case 1:
-                            c = Color.Turquoise;
-                            break;
-                        case 2:
-                            c = Color.Wheat;
-                            break;
-                        case 3:
-                            c = Color.YellowGreen;
-                            break;
-                        case 4:
-                            c = Color.Salmon;
-                            break;
-                        case 5:
-                            c = Color.PapayaWhip;
-                            break;
-                        case 6:
-                            c = Color.MediumPurple;
-                            break;
-                        case 7:
-                            c = Color.DarkOrchid;
-                            break;
-                        default:
-                            c = Color.White;
-                            break;
-                    }             
-
-                    GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
-                    blocks.Add(block);
-                }
-            }  
+            level.Create(blockTexture);
         }
 
         /// <summary>
@@ -246,7 +207,8 @@ namespace breakout
                             ball.Velocity.X += 0.1f;
                         }
                     }
-                    foreach (GameObject block in blocks)
+                    // ball collisions with blocks
+                    foreach (GameObject block in level.blocks)
                     {
                         if (ball.BoundingBox.Intersects(block.BoundingBox))
                         {
@@ -259,13 +221,14 @@ namespace breakout
                                 ball.Velocity.Y += 0.1f;
                             }
                             ball.Velocity.Y = -ball.Velocity.Y;
-                            blockremove.Add(block);
+                            level.blocksremove.Add(block);
+                            score += block.scorevalue;
                             break;
                         }
                     }
-                    foreach (GameObject block in blockremove)
+                    foreach (GameObject block in level.blocksremove)
                     {
-                        blocks.Remove(block);
+                        level.blocks.Remove(block);
                     }
                 }
             }
@@ -343,8 +306,9 @@ namespace breakout
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            // GraphicsDevice.Clear(Color.CornflowerBlue);
-
+            // GraphicsDevice.Clear(Color.Black);
+            string msg;
+            Vector2 textSize;
             // TODO: Add your drawing code here
             spriteBatch.Begin();
             spriteBatch.Draw(background, new Vector2(0,0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
@@ -353,19 +317,28 @@ namespace breakout
             {
                 ball.Draw(spriteBatch);
             }
-            foreach (GameObject block in blocks)
+            foreach (GameObject block in level.blocks)
             {
                 block.Draw(spriteBatch);
             }
-            spriteBatch.DrawString(arial, "Balls Left:" + ballsleft, new Vector2(0,0), Color.Yellow);
+            spriteBatch.DrawString(arial, "Balls Left : " + ballsleft, new Vector2(0,0), Color.Yellow);
+            msg = "Score : " + score;
+            textSize = arial.MeasureString(msg);
+            spriteBatch.DrawString(arial, msg, new Vector2(GraphicsDevice.Viewport.Width - textSize.X, 0), Color.Yellow);
+
+            msg = "Level " + level.number + " - " + level.name;
+            textSize = arial.MeasureString(msg);
+            spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), 0), Color.Yellow);
+
             if (gamestate==2)
             {
-                string msg = "Game Over";
-                Vector2 textSize = arial.MeasureString(msg);
-                spriteBatch.DrawString(arial, "Game Over", new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), (GraphicsDevice.Viewport.Height / 2) - (textSize.Y / 2)), Color.AliceBlue);
+                msg = "Game Over";
+                textSize = arial.MeasureString(msg);
+                spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), (GraphicsDevice.Viewport.Height / 2) - (textSize.Y / 2)), Color.AliceBlue);
             }
+
             spriteBatch.End();
             base.Draw(gameTime);
-        }
+        }        
     }
 }
