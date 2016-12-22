@@ -108,6 +108,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Content\Graphics\Arial.spritefont" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>

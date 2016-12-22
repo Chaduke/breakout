@@ -9,10 +9,7 @@ using System.Diagnostics;
 namespace breakout
 {
     /* TODO LIST
-     * 
-     * check on resizing blocks
-     * sprite effects / colors
-     * ball count
+    
      * score
      * levels
      * embedded balls
@@ -25,10 +22,13 @@ namespace breakout
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        GameObject paddle; 
-
+        SpriteFont arial;
+        GameObject paddle;
+        int gamestate;
+        
         List<GameObject> balls;
         List<GameObject> ballremove;
+        int ballsleft;
 
         List<GameObject> blocks;
         List<GameObject> blockremove;
@@ -47,7 +47,8 @@ namespace breakout
         MouseState currentMouseState;
         MouseState previousMouseState;
 
-        Texture2D background;        
+        Texture2D background;
+        Texture2D balltexture;
 
         public Game1()
         {
@@ -66,12 +67,12 @@ namespace breakout
             // TODO: Add your initialization logic here
             graphics.PreferredBackBufferWidth = 800;  // set this value to the desired width of your window
             graphics.PreferredBackBufferHeight = 600;   // set this value to the desired height of your window
-            graphics.ApplyChanges();              
-           
+            graphics.ApplyChanges();
+            gamestate = 0;
             r = new Random();
             balls = new List<GameObject>();
             ballremove = new List<GameObject>();
-
+            ballsleft = 3;
             blocks = new List<GameObject>();
             blockremove = new List<GameObject>();  
 
@@ -84,14 +85,14 @@ namespace breakout
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
+            arial=Content.Load<SpriteFont>("Arial");
             // TODO: use this.Content to load your game content here
             background = Content.Load<Texture2D>("Graphics\\background_sm");
             Texture2D paddleTexture = Content.Load<Texture2D>("Graphics\\paddle_sm");
             Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
             paddle = new GameObject(Color.White,paddleTexture,paddlePosition);
-            GameObject ball = new GameObject(Color.Yellow,Content.Load<Texture2D>("Graphics\\ball_sm"), new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(5, 7), r.Next(-7,-5)));
-            balls.Add(ball);
+            balltexture = Content.Load<Texture2D>("Graphics\\ball_sm");            
+           
             Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_sm");
             for (int row = 0; row < 8; row++)
             {
@@ -245,6 +246,18 @@ namespace breakout
             {
                 balls.Remove(ball);
             }
+            if (balls.Count == 0)
+            {
+                if (gamestate==1)
+                {
+                    ballsleft--;
+                    gamestate = 0;
+                    if (ballsleft==0)
+                    {
+                        gamestate = 2;
+                    }
+                }               
+            }
         }                
 
         private void UpdatePaddle(GameTime gameTime)
@@ -282,9 +295,17 @@ namespace breakout
             // Make sure that the paddle does not go out of bounds
             paddle.Position.X = MathHelper.Clamp(paddle.Position.X, 0, GraphicsDevice.Viewport.Width - paddle.Texture.Width);
             // paddle.Position.Y = MathHelper.Clamp(paddle.Position.Y, GraphicsDevice.Viewport.Height - (GraphicsDevice.Viewport.Height / 4), GraphicsDevice.Viewport.Height  - (paddle.Texture.Height * 2));
-
+            if (currentMouseState.LeftButton == ButtonState.Pressed)
+            {
+                if (gamestate == 0)
+                {
+                    balls.Add(new GameObject(Color.Yellow, balltexture, new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(5, 7), r.Next(-7, -5))));
+                    gamestate = 1;
+                }
+                
+            }
         }
-        /// <summary>
+        /// <summary
         /// This is called when the game should draw itself.
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
@@ -303,6 +324,13 @@ namespace breakout
             foreach (GameObject block in blocks)
             {
                 block.Draw(spriteBatch);
+            }
+            spriteBatch.DrawString(arial, "Balls Left:" + ballsleft, new Vector2(0,0), Color.Yellow);
+            if (gamestate==2)
+            {
+                string msg = "Game Over";
+                Vector2 textSize = arial.MeasureString(msg);
+                spriteBatch.DrawString(arial, "Game Over", new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), (GraphicsDevice.Viewport.Height / 2) - (textSize.Y / 2)), Color.AliceBlue);
             }
             spriteBatch.End();
             base.Draw(gameTime);
