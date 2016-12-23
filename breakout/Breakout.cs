@@ -27,12 +27,13 @@ namespace breakout
         enum textposition
         {
             TopLeft,TopMiddle,TopRight,Middle,BottomLeft,BottomMiddle,BottomRight
-        }
+        }        
 
         gamestate currentstate;
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        SpriteFont arial;
+        SpriteFont font_arial;
+        SpriteFont font_h;
         GameObject paddle;        
         int score;
 
@@ -45,8 +46,8 @@ namespace breakout
 
         // sounds
         SoundEffect paddlesound;
-        SoundEffect blocksound;
-        SoundEffect wallsound;
+        SoundEffect[] blocksound;
+        SoundEffect wallsound;       
 
         // Keyboard states used to determine key presses
         KeyboardState currentKeyboardState;
@@ -62,6 +63,8 @@ namespace breakout
 
         Texture2D background;
         Texture2D balltexture;
+        Texture2D blocktexture;
+        Texture2D paddletexture;
 
         public Breakout()
         {
@@ -91,8 +94,8 @@ namespace breakout
             level.number = 1;
             level.name = "Getting Started";
             level.blocks = new List<GameObject>();
-            level.blocksremove = new List<GameObject>();  
-            
+            level.blocksremove = new List<GameObject>();
+            blocksound = new SoundEffect[6];
             //Enable the FreeDrag gesture.
             TouchPanel.EnabledGestures = GestureType.FreeDrag;
             base.Initialize();
@@ -103,19 +106,27 @@ namespace breakout
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             // load fonts
-            arial=Content.Load<SpriteFont>("Fonts\\Arial");
+            font_arial=Content.Load<SpriteFont>("Fonts\\Arial");
+            font_h = Content.Load<SpriteFont>("Fonts\\h");
             // load sounds
-            paddlesound = Content.Load<SoundEffect>("Audio\\c7");
-            blocksound = Content.Load<SoundEffect>("Audio\\e7");
-            wallsound = Content.Load<SoundEffect>("Audio\\c6");
+            paddlesound = Content.Load<SoundEffect>("Audio\\c6");
+            
+            blocksound[0] = Content.Load<SoundEffect>("Audio\\d7");
+            blocksound[1] = Content.Load<SoundEffect>("Audio\\e7");
+            blocksound[2] = Content.Load<SoundEffect>("Audio\\f7");
+            blocksound[3] = Content.Load<SoundEffect>("Audio\\g7");
+            blocksound[4] = Content.Load<SoundEffect>("Audio\\a6");
+            blocksound[5] = Content.Load<SoundEffect>("Audio\\b6");
+
+            wallsound = Content.Load<SoundEffect>("Audio\\c7");
             // load graphics
             background = Content.Load<Texture2D>("Graphics\\background_sm");
-            Texture2D paddleTexture = Content.Load<Texture2D>("Graphics\\paddle_sm");
+            paddletexture = Content.Load<Texture2D>("Graphics\\paddle_sm");
             Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
-            paddle = new GameObject(Color.White,paddleTexture,paddlePosition);
+            paddle = new GameObject(Color.White,paddletexture,paddlePosition);
             balltexture = Content.Load<Texture2D>("Graphics\\ball_sm");           
-            Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_sm");
-            level.Create(blockTexture);
+            blocktexture = Content.Load<Texture2D>("Graphics\\block_sm");
+            level.Create(blocktexture);
         }
 
         /// <summary>
@@ -191,6 +202,39 @@ namespace breakout
             if (currentMouseState.Y < 0) Mouse.SetPosition(currentMouseState.X, 0);
             if (currentMouseState.Y > GraphicsDevice.Viewport.Height) Mouse.SetPosition(currentMouseState.X, GraphicsDevice.Viewport.Height);
 
+            // add ball on click
+            if (currentMouseState.LeftButton == ButtonState.Pressed)
+            {
+                if (currentstate == gamestate.WaitingBall)
+                {
+                    balls.Add(new GameObject(Color.Yellow, balltexture, new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(-7, 7), r.Next(-7, -5))));
+                    currentstate = gamestate.BallLaunched;
+                }
+
+                if (currentstate == gamestate.GameOver)
+                {
+                    ballsleft = 3;                    
+                    currentstate = gamestate.WaitingBall;
+                    foreach(GameObject ball in balls)
+                    {
+                        ballremove.Add(ball);
+                    }
+                    foreach (GameObject ball in ballremove)
+                    {
+                        balls.Remove(ball);
+                    }
+                    foreach (GameObject block in level.blocks)
+                    {
+                        level.blocksremove.Add(block);
+                    }
+                    foreach (GameObject block in level.blocksremove)
+                    {
+                        level.blocks.Remove(block);
+                    }
+                    level.Create(blocktexture);
+                }
+
+            }
             base.Update(gameTime);
         }
           
@@ -262,11 +306,11 @@ namespace breakout
                         // increase horizontal ball speed
                         if (ball.Velocity.X < 0)
                         {
-                            ball.Velocity.X -= 0.1f;
+                            ball.Velocity.X -= 0.2f;
                         }
                         else
                         {
-                            ball.Velocity.X += 0.1f;
+                            ball.Velocity.X += 0.2f;
                         }
                     }
                     // ball collisions with blocks
@@ -274,14 +318,14 @@ namespace breakout
                     {
                         if (ball.BoundingBox.Intersects(block.BoundingBox))
                         {
-                            blocksound.Play();
+                            blocksound[block.sound].Play();
                             if (ball.Velocity.Y < 0)
                             {                                
-                                ball.Velocity.Y -= 0.1f;
+                                ball.Velocity.Y -= 0.01f;
                             }
                             else
                             {
-                                ball.Velocity.Y += 0.1f;
+                                ball.Velocity.Y += 0.01f;
                             }
                             ball.Velocity.Y = -ball.Velocity.Y;
                             level.blocksremove.Add(block);
@@ -359,15 +403,7 @@ namespace breakout
             // Make sure that the paddle does not go out of bounds
             paddle.Position.X = MathHelper.Clamp(paddle.Position.X, 0, GraphicsDevice.Viewport.Width - paddle.Texture.Width);
             // paddle.Position.Y = MathHelper.Clamp(paddle.Position.Y, GraphicsDevice.Viewport.Height - (GraphicsDevice.Viewport.Height / 4), GraphicsDevice.Viewport.Height  - (paddle.Texture.Height * 2));
-            if (currentMouseState.LeftButton == ButtonState.Pressed)
-            {
-                if (currentstate == gamestate.WaitingBall)
-                {
-                    balls.Add(new GameObject(Color.Yellow, balltexture, new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(5, 7), r.Next(-7, -5))));
-                    currentstate = gamestate.BallLaunched;
-                }
-                
-            }
+            
         }
         /// <summary
         /// This is called when the game should draw itself.
@@ -383,13 +419,13 @@ namespace breakout
             switch (currentstate)
             {
                 case gamestate.MainMenu:
-                    DrawText("Main Menu", textposition.TopMiddle);
+                    DrawText("Main Menu", textposition.TopMiddle, font_h, Color.DarkOliveGreen);
                     break;
                 case gamestate.Editor:
-                    DrawText("Level Editor", textposition.TopMiddle);
+                    DrawText("Level Editor", textposition.TopMiddle,font_h, Color.DarkOliveGreen);
                     break;
                 case gamestate.WaitingBall:
-                    DrawText("Left Click to Launch Ball", textposition.Middle);                   
+                    DrawText("Left Click to Launch Ball", textposition.Middle, font_h, Color.DarkOliveGreen);                   
                     paddle.Draw(spriteBatch);
                     DrawBlocks();
                     DrawGameInfo();
@@ -406,7 +442,7 @@ namespace breakout
                     break;
                 case gamestate.GameOver:
                     DrawBlocks();                    
-                    DrawText("Game Over",textposition.Middle);                    
+                    DrawText("Game Over",textposition.Middle, font_h, Color.Red);                    
                     DrawGameInfo();
                     break;
             }
@@ -425,40 +461,40 @@ namespace breakout
         {
 
             // draw game info
-            DrawText("Balls Left : " + ballsleft, textposition.TopLeft);
-            DrawText("Level " + level.number + " - " + level.name, textposition.TopMiddle);
-            DrawText("Score : " + score,textposition.TopRight);          
-            DrawText("Mouse Coords : " + currentMouseState.X + "," + currentMouseState.Y, textposition.BottomMiddle);          
+            DrawText("Balls Left : " + ballsleft, textposition.TopLeft,font_h,Color.Azure);
+            DrawText("Level " + level.number + " - " + level.name, textposition.TopMiddle, font_h, Color.Azure);
+            DrawText("Score : " + score,textposition.TopRight, font_h, Color.Azure);          
+            DrawText("Mouse Coords : " + currentMouseState.X + "," + currentMouseState.Y, textposition.BottomMiddle, font_h, Color.Azure);          
         }
 
-        private void DrawText(string msg,textposition tp)
+        private void DrawText(string msg,textposition tp,SpriteFont font,Color color)
         {
-            Vector2 textsize = arial.MeasureString(msg);
+            Vector2 textsize = font.MeasureString(msg);
             int w = GraphicsDevice.Viewport.Width;
             int h = GraphicsDevice.Viewport.Height;
 
             switch (tp)
             {
                 case textposition.BottomLeft:
-                    spriteBatch.DrawString(arial, msg, new Vector2(0, h - textsize.Y), Color.Yellow);
+                    spriteBatch.DrawString(font, msg, new Vector2(0, h - textsize.Y), color);
                     break;
                 case textposition.BottomMiddle:
-                    spriteBatch.DrawString(arial, msg, new Vector2((w / 2) - (textsize.X / 2), h - textsize.Y), Color.Yellow);
+                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), h - textsize.Y), color);
                     break;
                 case textposition.BottomRight:
-                    spriteBatch.DrawString(arial, msg, new Vector2(w - textsize.X, h - textsize.Y), Color.Yellow);
+                    spriteBatch.DrawString(font, msg, new Vector2(w - textsize.X, h - textsize.Y), color);
                     break;
                 case textposition.Middle:
-                    spriteBatch.DrawString(arial, msg, new Vector2((w / 2) - (textsize.X / 2), (h / 2) - (textsize.Y / 2)), Color.Yellow);
+                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), (h / 2) - (textsize.Y / 2)), color);
                     break;
                 case textposition.TopLeft:
-                    spriteBatch.DrawString(arial, msg, new Vector2(0, 0), Color.Yellow);
+                    spriteBatch.DrawString(font, msg, new Vector2(0, 0), color);
                     break;
                 case textposition.TopMiddle:
-                    spriteBatch.DrawString(arial, msg, new Vector2((w / 2) - (textsize.X / 2), 0), Color.Yellow);
+                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), 0), color);
                     break;
                 case textposition.TopRight:
-                    spriteBatch.DrawString(arial, msg, new Vector2(w - textsize.X, 0), Color.Yellow);
+                    spriteBatch.DrawString(font, msg, new Vector2(w - textsize.X, 0), color);
                     break;
             }
 

@@ -14,9 +14,9 @@ namespace breakout
         public void Create(Texture2D blockTexture)
         {
             // setup first row set
-            for (int row = 0; row < 4; row++)
+            for (int row = 0; row < 3; row++)
             {
-                for (int col = 0; col < 16; col++)
+                for (int col = 0; col < 33; col++)
                 {
                     int x = (blockTexture.Width * col);
                     int y = (blockTexture.Height * 3) + (row * blockTexture.Height);
@@ -30,24 +30,19 @@ namespace breakout
                             c = Color.Turquoise;
                             break;
                         case 2:
-                            c = Color.Wheat;
-                            break;
-                        case 3:
-                            c = Color.Orange;
-                            break;
-                        default:
-                            c = Color.White;
-                            break;
+                            c = Color.Green;
+                            break;                       
                     }
                     GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
                     block.scorevalue = 100 - (row * 10);
+                    block.sound = row;
                     blocks.Add(block);
                 }
             }
             // steup second row set
             for (int row = 0; row < 3; row++)
             {
-                for (int col = 0; col < 16; col++)
+                for (int col = 0; col < 33; col++)
                 {
                     int x = (blockTexture.Width * col);
                     int y = (blockTexture.Height * 10) + (row * blockTexture.Height);
@@ -61,14 +56,12 @@ namespace breakout
                             c = Color.DeepPink;
                             break;
                         case 2:
-                            c = Color.Green;
-                            break;
-                        default:
-                            c = Color.White;
-                            break;
+                            c = Color.Cornsilk;
+                            break;                       
                     }
                     GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
                     block.scorevalue = 50 - (row * 10);
+                    block.sound = row + 3;
                     blocks.Add(block);
                 }
 

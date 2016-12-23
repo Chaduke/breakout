@@ -139,3 +139,21 @@
 /processorParam:Quality=Best
 /build:Audio/g7.wav
 
+#begin Fonts\h.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:TextureFormat=Compressed
+/build:Fonts\h.spritefont
+
+#begin Audio/a6.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/a6.wav
+
+#begin Audio/b6.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/b6.wav
+
