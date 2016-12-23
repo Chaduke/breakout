@@ -10,7 +10,7 @@ namespace breakout
 {
     /* TODO LIST
     
-     * levels    
+     * level editor 
      * embedded balls     
      * ball angle off paddle tweaks
      * sound and music
@@ -19,11 +19,15 @@ namespace breakout
        
     public class Game1 : Game
     {
+        enum gamestate
+        {
+            MainMenu,Editor,WaitingBall,BallLaunched,GameOver
+        }
+        gamestate currentstate;
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         SpriteFont arial;
-        GameObject paddle;
-        int gamestate;
+        GameObject paddle;        
         int score;
 
         List<GameObject> balls;
@@ -32,6 +36,7 @@ namespace breakout
         int ballsleft;
         Level level;          
         Random r;        
+
 
         // Keyboard states used to determine key presses
         KeyboardState currentKeyboardState;
@@ -66,7 +71,7 @@ namespace breakout
             graphics.PreferredBackBufferWidth = 800;  // set this value to the desired width of your window
             graphics.PreferredBackBufferHeight = 600;   // set this value to the desired height of your window
             graphics.ApplyChanges();
-            gamestate = 0;
+            currentstate = gamestate.WaitingBall;
             score = 0;
             r = new Random();
             balls = new List<GameObject>();
@@ -127,11 +132,35 @@ namespace breakout
             currentGamePadState = GamePad.GetState(PlayerIndex.One);
             currentMouseState = Mouse.GetState();
 
-            //Update the player
-            UpdatePaddle(gameTime);
-            // Update the balls
-            UpdateBalls(gameTime);
-            
+            switch(currentstate)
+            {
+                case gamestate.MainMenu:
+                    break;
+                case gamestate.Editor:
+                    break;
+                case gamestate.WaitingBall:
+                    UpdatePaddle(gameTime);
+                    break;
+                case gamestate.BallLaunched:
+                    UpdatePaddle(gameTime);
+                    UpdateBalls(gameTime);
+                    break;
+                case gamestate.GameOver:
+                    break;                
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.F2))
+            {
+                currentstate = gamestate.Editor;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.F5))
+            {
+                currentstate = gamestate.WaitingBall;
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.F1))
+            {
+                currentstate = gamestate.MainMenu;
+            }
+
             if (currentKeyboardState.IsKeyDown(Keys.Escape)) Exit();
             base.Update(gameTime);
         }
@@ -230,6 +259,12 @@ namespace breakout
                     {
                         level.blocks.Remove(block);
                     }
+                    if (level.blocks.Count == 0)
+                    {
+                        currentstate = gamestate.WaitingBall;
+                        Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_sm");
+                        level.Create(blockTexture);
+                    }
                 }
             }
             catch(Exception ex)
@@ -243,13 +278,13 @@ namespace breakout
             }
             if (balls.Count == 0)
             {
-                if (gamestate==1)
+                if (currentstate == gamestate.BallLaunched)
                 {
                     ballsleft--;
-                    gamestate = 0;
+                    currentstate = gamestate.WaitingBall;
                     if (ballsleft==0)
                     {
-                        gamestate = 2;
+                        currentstate = gamestate.GameOver;
                     }
                 }               
             }
@@ -292,10 +327,10 @@ namespace breakout
             // paddle.Position.Y = MathHelper.Clamp(paddle.Position.Y, GraphicsDevice.Viewport.Height - (GraphicsDevice.Viewport.Height / 4), GraphicsDevice.Viewport.Height  - (paddle.Texture.Height * 2));
             if (currentMouseState.LeftButton == ButtonState.Pressed)
             {
-                if (gamestate == 0)
+                if (currentstate == gamestate.WaitingBall)
                 {
                     balls.Add(new GameObject(Color.Yellow, balltexture, new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(5, 7), r.Next(-7, -5))));
-                    gamestate = 1;
+                    currentstate = gamestate.BallLaunched;
                 }
                 
             }
@@ -309,34 +344,83 @@ namespace breakout
             // GraphicsDevice.Clear(Color.Black);
             string msg;
             Vector2 textSize;
-            // TODO: Add your drawing code here
+            
             spriteBatch.Begin();
-            spriteBatch.Draw(background, new Vector2(0,0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
-            paddle.Draw(spriteBatch);
-            foreach (GameObject ball in balls)
-            {
-                ball.Draw(spriteBatch);
-            }
-            foreach (GameObject block in level.blocks)
-            {
-                block.Draw(spriteBatch);
-            }
-            spriteBatch.DrawString(arial, "Balls Left : " + ballsleft, new Vector2(0,0), Color.Yellow);
-            msg = "Score : " + score;
-            textSize = arial.MeasureString(msg);
-            spriteBatch.DrawString(arial, msg, new Vector2(GraphicsDevice.Viewport.Width - textSize.X, 0), Color.Yellow);
+            spriteBatch.Draw(background, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 
-            msg = "Level " + level.number + " - " + level.name;
-            textSize = arial.MeasureString(msg);
-            spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), 0), Color.Yellow);
-
-            if (gamestate==2)
+            switch (currentstate)
             {
-                msg = "Game Over";
-                textSize = arial.MeasureString(msg);
-                spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), (GraphicsDevice.Viewport.Height / 2) - (textSize.Y / 2)), Color.AliceBlue);
+                case gamestate.MainMenu:
+                    msg = "Main Menu";
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), 0), Color.Yellow);
+                    break;
+                case gamestate.Editor:
+                    msg = "Level Editor";
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), 0), Color.Yellow);
+                    break;
+                case gamestate.WaitingBall:
+                    msg = "Left Click to Launch Ball";
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), (GraphicsDevice.Viewport.Height / 2) - (textSize.Y / 2)), Color.AliceBlue);
+                    // draw paddle
+                    paddle.Draw(spriteBatch);
+                    //draw blocks
+                    foreach (GameObject block in level.blocks)
+                    {
+                        block.Draw(spriteBatch);
+                    }
+                    // draw game info
+                    spriteBatch.DrawString(arial, "Balls Left : " + ballsleft, new Vector2(0, 0), Color.Yellow);
+                    msg = "Score : " + score;
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2(GraphicsDevice.Viewport.Width - textSize.X, 0), Color.Yellow);
+                    msg = "Level " + level.number + " - " + level.name;
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), 0), Color.Yellow);
+                    break;
+                case gamestate.BallLaunched:
+                    // draw paddle
+                    paddle.Draw(spriteBatch);
+                    // draw blocks
+                    foreach (GameObject block in level.blocks)
+                    {
+                        block.Draw(spriteBatch);
+                    }
+                    // draw balls
+                    foreach (GameObject ball in balls)
+                    {
+                        ball.Draw(spriteBatch);
+                    }
+                    // draw game info
+                    spriteBatch.DrawString(arial, "Balls Left : " + ballsleft, new Vector2(0, 0), Color.Yellow);
+                    msg = "Score : " + score;
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2(GraphicsDevice.Viewport.Width - textSize.X, 0), Color.Yellow);
+                    msg = "Level " + level.number + " - " + level.name;
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), 0), Color.Yellow);
+                    break;
+                case gamestate.GameOver:
+                    // draw blocks
+                    foreach (GameObject block in level.blocks)
+                    {
+                        block.Draw(spriteBatch);
+                    }
+                    msg = "Game Over";
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), (GraphicsDevice.Viewport.Height / 2) - (textSize.Y / 2)), Color.AliceBlue);
+                    // draw game info
+                    spriteBatch.DrawString(arial, "Balls Left : " + ballsleft, new Vector2(0, 0), Color.Yellow);
+                    msg = "Score : " + score;
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2(GraphicsDevice.Viewport.Width - textSize.X, 0), Color.Yellow);
+                    msg = "Level " + level.number + " - " + level.name;
+                    textSize = arial.MeasureString(msg);
+                    spriteBatch.DrawString(arial, msg, new Vector2((GraphicsDevice.Viewport.Width / 2) - (textSize.X / 2), 0), Color.Yellow);
+                    break;
             }
-
             spriteBatch.End();
             base.Draw(gameTime);
         }        
