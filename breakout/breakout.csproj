@@ -9,8 +9,8 @@
     <ProjectGuid>{E9698732-17B3-4F9F-B0D8-B76983547BD6}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>breakout_windows</RootNamespace>
-    <AssemblyName>breakout_windows</AssemblyName>
+    <RootNamespace>breakout</RootNamespace>
+    <AssemblyName>breakout</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MonoGamePlatform>Windows</MonoGamePlatform>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -38,7 +38,7 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Game1.cs" />
+    <Compile Include="Breakout.cs" />
     <Compile Include="GameObject.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Program.cs" />
