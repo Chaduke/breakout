@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -40,8 +41,12 @@ namespace breakout
 
         int ballsleft;
         Level level;          
-        Random r;        
+        Random r;
 
+        // sounds
+        SoundEffect paddlesound;
+        SoundEffect blocksound;
+        SoundEffect wallsound;
 
         // Keyboard states used to determine key presses
         KeyboardState currentKeyboardState;
@@ -87,7 +92,7 @@ namespace breakout
             level.name = "Getting Started";
             level.blocks = new List<GameObject>();
             level.blocksremove = new List<GameObject>();  
-
+            
             //Enable the FreeDrag gesture.
             TouchPanel.EnabledGestures = GestureType.FreeDrag;
             base.Initialize();
@@ -97,8 +102,13 @@ namespace breakout
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            arial=Content.Load<SpriteFont>("Arial");
-            // TODO: use this.Content to load your game content here
+            // load fonts
+            arial=Content.Load<SpriteFont>("Fonts\\Arial");
+            // load sounds
+            paddlesound = Content.Load<SoundEffect>("Audio\\c7");
+            blocksound = Content.Load<SoundEffect>("Audio\\e7");
+            wallsound = Content.Load<SoundEffect>("Audio\\c6");
+            // load graphics
             background = Content.Load<Texture2D>("Graphics\\background_sm");
             Texture2D paddleTexture = Content.Load<Texture2D>("Graphics\\paddle_sm");
             Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
@@ -196,12 +206,14 @@ namespace breakout
                     if (ball.Position.X > GraphicsDevice.Viewport.Width - ball.Texture.Width)
                     {
                         // bounce off right wall
+                        wallsound.Play();
                         ball.Velocity.X = -ball.Velocity.X;
                         ball.Position.X = GraphicsDevice.Viewport.Width - ball.Texture.Width;
                     }
                     if (ball.Position.X < 0)
                     {
                         // bounce off left wall
+                        wallsound.Play();
                         ball.Velocity.X = -ball.Velocity.X;
                         ball.Position.X = 0;
                     }
@@ -214,11 +226,13 @@ namespace breakout
                     if (ball.Position.Y < 0)
                     {
                         // bounce off top wall
+                        wallsound.Play();
                         ball.Velocity.Y = -ball.Velocity.Y;
                         ball.Position.Y = 0;
                     }
                     if (ball.BoundingBox.Intersects(paddle.BoundingBox))
                     {
+                        paddlesound.Play();
                         ball.Position.Y = paddle.Position.Y - ball.Texture.Height;
                         ball.Velocity.Y = -ball.Velocity.Y;
 
@@ -260,6 +274,7 @@ namespace breakout
                     {
                         if (ball.BoundingBox.Intersects(block.BoundingBox))
                         {
+                            blocksound.Play();
                             if (ball.Velocity.Y < 0)
                             {                                
                                 ball.Velocity.Y -= 0.1f;
