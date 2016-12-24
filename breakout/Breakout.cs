@@ -10,19 +10,18 @@ using System.Diagnostics;
 namespace breakout
 {
     /* TODO LIST
-    
-     * level editor 
+     
      * embedded balls     
-     * ball angle off paddle tweaks
      * sound and music
+     * level editor    
     
-    */    
-       
+    */
+
     public class Breakout : Game
     {
         enum gamestate
         {
-            MainMenu,Editor,WaitingBall,BallLaunched,GameOver
+            MainMenu,Editor,WaitingStart,WaitingBall,BallLaunched,GameOver
         }
         enum textposition
         {
@@ -33,21 +32,18 @@ namespace breakout
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         SpriteFont font_arial;
-        SpriteFont font_h;
+        SpriteFont font_GoodDog;
         GameObject paddle;        
         int score;
-
-        List<GameObject> balls;
-        List<GameObject> ballremove;
-
-        int ballsleft;
+               
         Level level;          
         Random r;
 
         // sounds
         SoundEffect paddlesound;
         SoundEffect[] blocksound;
-        SoundEffect wallsound;       
+        SoundEffect wallsound;
+        Single fx_volume, fx_pitch, fx_pan;
 
         // Keyboard states used to determine key presses
         KeyboardState currentKeyboardState;
@@ -65,39 +61,37 @@ namespace breakout
         Texture2D balltexture;
         Texture2D blocktexture;
         Texture2D paddletexture;
+        Texture2D pixel;
 
         public Breakout()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
         }
-
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
+        
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-            graphics.PreferredBackBufferWidth = 800;  // set this value to the desired width of your window
-            graphics.PreferredBackBufferHeight = 600;   // set this value to the desired height of your window
+           
+            graphics.PreferredBackBufferWidth = 960;  // set this value to the desired width of your window
+            graphics.PreferredBackBufferHeight = 540;   // set this value to the desired height of your window            
             graphics.ApplyChanges();
             currentstate = gamestate.WaitingBall;
             score = 0;
-            r = new Random();
-            balls = new List<GameObject>();
-            ballremove = new List<GameObject>();
-            ballsleft = 3;
+            r = new Random();            
             level = new Level();
             level.number = 1;
             level.name = "Getting Started";
             level.blocks = new List<GameObject>();
             level.blocksremove = new List<GameObject>();
+            level.balls = new List<GameObject>();
+            level.ballsremove = new List<GameObject>();
+            level.ballsleft = 3;
+
             blocksound = new SoundEffect[6];
-            //Enable the FreeDrag gesture.
-            TouchPanel.EnabledGestures = GestureType.FreeDrag;
+            fx_volume = 0.0f;
+            fx_pitch = 0.0f;
+            fx_pan = 0.0f;
+            
             base.Initialize();
         }
        
@@ -107,7 +101,7 @@ namespace breakout
             spriteBatch = new SpriteBatch(GraphicsDevice);
             // load fonts
             font_arial=Content.Load<SpriteFont>("Fonts\\Arial");
-            font_h = Content.Load<SpriteFont>("Fonts\\h");
+            font_GoodDog = Content.Load<SpriteFont>("Fonts\\GoodDog");
             // load sounds
             paddlesound = Content.Load<SoundEffect>("Audio\\c6");
             
@@ -120,13 +114,18 @@ namespace breakout
 
             wallsound = Content.Load<SoundEffect>("Audio\\c7");
             // load graphics
-            background = Content.Load<Texture2D>("Graphics\\background_sm");
-            paddletexture = Content.Load<Texture2D>("Graphics\\paddle_sm");
-            Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
-            paddle = new GameObject(Color.White,paddletexture,paddlePosition);
-            balltexture = Content.Load<Texture2D>("Graphics\\ball_sm");           
-            blocktexture = Content.Load<Texture2D>("Graphics\\block_sm");
+            LoadGraphics("sm");
             level.Create(blocktexture);
+        }
+        private void LoadGraphics(string ScreenSize)
+        {
+            background = Content.Load<Texture2D>("Graphics\\background_" + ScreenSize);
+            paddletexture = Content.Load<Texture2D>("Graphics\\paddle_" + ScreenSize);
+            Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
+            paddle = new GameObject(Color.White, paddletexture, paddlePosition);
+            balltexture = Content.Load<Texture2D>("Graphics\\ball_" + ScreenSize);
+            blocktexture = Content.Load<Texture2D>("Graphics\\block_" + ScreenSize);           
+            pixel = Content.Load<Texture2D>("Graphics\\pixel");
         }
 
         /// <summary>
@@ -178,6 +177,31 @@ namespace breakout
 
             // Get keyboard input
 
+            // fullscreen toggle
+            if (currentKeyboardState.IsKeyDown(Keys.RightAlt) && currentKeyboardState.IsKeyDown(Keys.Enter))
+            {
+                //check the current screen mode
+                if (graphics.IsFullScreen)
+                {
+                    //switch to windowed
+                    graphics.PreferredBackBufferWidth = 960;
+                    graphics.PreferredBackBufferHeight = 540;
+                    graphics.ApplyChanges();
+                    graphics.ToggleFullScreen();
+                    LoadGraphics("sm");
+                    level.Reload(blocktexture,balltexture, false);
+                }
+                else
+                {
+                    //switch to fullscreen
+                    graphics.PreferredBackBufferWidth = 1920;
+                    graphics.PreferredBackBufferHeight = 1080;
+                    graphics.ApplyChanges();                   
+                    graphics.ToggleFullScreen();
+                    LoadGraphics("lg");
+                    level.Reload(blocktexture,balltexture, true);
+                }
+            }
             // Switch to Main Menu
             if (currentKeyboardState.IsKeyDown(Keys.F1))
             {
@@ -207,21 +231,22 @@ namespace breakout
             {
                 if (currentstate == gamestate.WaitingBall)
                 {
-                    balls.Add(new GameObject(Color.Yellow, balltexture, new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(-7, 7), r.Next(-7, -5))));
+                    level.balls.Add(new GameObject(Color.Yellow, balltexture, new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(-7, 7), r.Next(-7, -5))));
                     currentstate = gamestate.BallLaunched;
                 }
 
                 if (currentstate == gamestate.GameOver)
                 {
-                    ballsleft = 3;                    
+                    level.ballsleft = 3;
+                    score = 0;  
                     currentstate = gamestate.WaitingBall;
-                    foreach(GameObject ball in balls)
+                    foreach(GameObject ball in level.balls)
                     {
-                        ballremove.Add(ball);
+                        level.ballsremove.Add(ball);
                     }
-                    foreach (GameObject ball in ballremove)
+                    foreach (GameObject ball in level.ballsremove)
                     {
-                        balls.Remove(ball);
+                        level.balls.Remove(ball);
                     }
                     foreach (GameObject block in level.blocks)
                     {
@@ -243,40 +268,40 @@ namespace breakout
         {
             try
             {
-                foreach (GameObject ball in balls)
+                foreach (GameObject ball in level.balls)
                 {
                     ball.Position.X += ball.Velocity.X;
                     ball.Position.Y += ball.Velocity.Y;
                     if (ball.Position.X > GraphicsDevice.Viewport.Width - ball.Texture.Width)
                     {
                         // bounce off right wall
-                        wallsound.Play();
+                        wallsound.Play(fx_volume,fx_pitch,fx_pan);
                         ball.Velocity.X = -ball.Velocity.X;
                         ball.Position.X = GraphicsDevice.Viewport.Width - ball.Texture.Width;
                     }
                     if (ball.Position.X < 0)
                     {
                         // bounce off left wall
-                        wallsound.Play();
+                        wallsound.Play(fx_volume, fx_pitch, fx_pan);
                         ball.Velocity.X = -ball.Velocity.X;
                         ball.Position.X = 0;
                     }
                     if (ball.Position.Y > GraphicsDevice.Viewport.Height - ball.Texture.Height)
                     {
                         // hit the floor
-                        ballremove.Add(ball);
+                        level.ballsremove.Add(ball);
                         continue;
                     }
                     if (ball.Position.Y < 0)
                     {
                         // bounce off top wall
-                        wallsound.Play();
+                        wallsound.Play(fx_volume, fx_pitch, fx_pan);
                         ball.Velocity.Y = -ball.Velocity.Y;
                         ball.Position.Y = 0;
                     }
-                    if (ball.BoundingBox.Intersects(paddle.BoundingBox))
+                    if ((ball.Position.Y + ball.Texture.Height > paddle.Position.Y) && (ball.Position.X + ball.Texture.Width > paddle.Position.X) && (ball.Position.X < paddle.Position.X + paddle.Texture.Width))
                     {
-                        paddlesound.Play();
+                        paddlesound.Play(fx_volume, fx_pitch, fx_pan);
                         ball.Position.Y = paddle.Position.Y - ball.Texture.Height;
                         ball.Velocity.Y = -ball.Velocity.Y;
 
@@ -284,25 +309,8 @@ namespace breakout
                         int ballcenter = (int)(ball.Position.X) + (ball.Texture.Width / 2);
                         int paddlecenter = (int)(paddle.Position.X) + (paddle.Texture.Width / 2);
                         int paddleside = ballcenter - paddlecenter;
+                        ball.Velocity.X = paddleside / 2;                       
 
-                        if (paddleside > 0)
-                        {
-                            // ball is on the right side of the paddle
-                            if (ball.Velocity.X < 0)
-                            {
-                                // ball is traveling to the left, so reverse it
-                                ball.Velocity.X = -ball.Velocity.X;
-                            }
-                        }
-                        else
-                        {
-                            // ball is on the left side of the paddle
-                            if (ball.Velocity.X > 0)
-                            {
-                                // ball is travelling to the right, so reverse it
-                                ball.Velocity.X = -ball.Velocity.X;
-                            }
-                        }
                         // increase horizontal ball speed
                         if (ball.Velocity.X < 0)
                         {
@@ -318,7 +326,7 @@ namespace breakout
                     {
                         if (ball.BoundingBox.Intersects(block.BoundingBox))
                         {
-                            blocksound[block.sound].Play();
+                            blocksound[block.sound].Play(fx_volume, fx_pitch, fx_pan);
                             if (ball.Velocity.Y < 0)
                             {                                
                                 ball.Velocity.Y -= 0.01f;
@@ -339,9 +347,8 @@ namespace breakout
                     }
                     if (level.blocks.Count == 0)
                     {
-                        currentstate = gamestate.WaitingBall;
-                        Texture2D blockTexture = Content.Load<Texture2D>("Graphics\\block_sm");
-                        level.Create(blockTexture);
+                        // advance level
+                        level.Create(blocktexture);
                     }
                 }
             }
@@ -350,17 +357,17 @@ namespace breakout
                 Debug.WriteLine(ex.Message);
 
             }
-            foreach(GameObject ball in ballremove)
+            foreach(GameObject ball in level.ballsremove)
             {
-                balls.Remove(ball);
+                level.balls.Remove(ball);
             }
-            if (balls.Count == 0)
+            if (level.balls.Count == 0)
             {
                 if (currentstate == gamestate.BallLaunched)
                 {
-                    ballsleft--;
+                    level.ballsleft--;
                     currentstate = gamestate.WaitingBall;
-                    if (ballsleft==0)
+                    if (level.ballsleft ==0)
                     {
                         currentstate = gamestate.GameOver;
                     }
@@ -419,13 +426,14 @@ namespace breakout
             switch (currentstate)
             {
                 case gamestate.MainMenu:
-                    DrawText("Main Menu", textposition.TopMiddle, font_h, Color.DarkOliveGreen);
+                    DrawText("Main Menu", textposition.TopMiddle, font_GoodDog, Color.DarkOliveGreen);
                     break;
                 case gamestate.Editor:
-                    DrawText("Level Editor", textposition.TopMiddle,font_h, Color.DarkOliveGreen);
+                    DrawGrid(spriteBatch);
+                    DrawText("Level Editor", textposition.TopMiddle,font_GoodDog, Color.DarkOliveGreen);                    
                     break;
                 case gamestate.WaitingBall:
-                    DrawText("Left Click to Launch Ball", textposition.Middle, font_h, Color.DarkOliveGreen);                   
+                    DrawText("Left Click to Launch Ball", textposition.Middle, font_GoodDog, Color.DarkOliveGreen);                   
                     paddle.Draw(spriteBatch);
                     DrawBlocks();
                     DrawGameInfo();
@@ -434,7 +442,7 @@ namespace breakout
                     paddle.Draw(spriteBatch);
                     DrawBlocks();
                     // draw balls
-                    foreach (GameObject ball in balls)
+                    foreach (GameObject ball in level.balls)
                     {
                         ball.Draw(spriteBatch);
                     }
@@ -442,12 +450,27 @@ namespace breakout
                     break;
                 case gamestate.GameOver:
                     DrawBlocks();                    
-                    DrawText("Game Over",textposition.Middle, font_h, Color.Red);                    
+                    DrawText("Game Over",textposition.Middle, font_GoodDog, Color.Red);                    
                     DrawGameInfo();
                     break;
             }
             spriteBatch.End();
             base.Draw(gameTime);
+        }
+        private void DrawGrid(SpriteBatch spriteBatch)            
+        {
+            for(int x = 1; x < GraphicsDevice.Viewport.Width / blocktexture.Width; x++)
+            {
+                for(int y = 1; y< GraphicsDevice.Viewport.Height / blocktexture.Height; y++)
+                {
+                    Line l1 = new Line(new Vector2(x * blocktexture.Width, 0),new Vector2(x * blocktexture.Width, GraphicsDevice.Viewport.Height),1,Color.Gray, pixel);
+                    Line l2 = new Line(new Vector2(0, y * blocktexture.Height), new Vector2(GraphicsDevice.Viewport.Width, y * blocktexture.Height), 1, Color.Gray, pixel);
+                    l1.Update();
+                    l1.Draw(spriteBatch);
+                    l2.Update();
+                    l2.Draw(spriteBatch);
+                }
+            }
         }
         private void DrawBlocks()
         {
@@ -461,10 +484,10 @@ namespace breakout
         {
 
             // draw game info
-            DrawText("Balls Left : " + ballsleft, textposition.TopLeft,font_h,Color.Azure);
-            DrawText("Level " + level.number + " - " + level.name, textposition.TopMiddle, font_h, Color.Azure);
-            DrawText("Score : " + score,textposition.TopRight, font_h, Color.Azure);          
-            DrawText("Mouse Coords : " + currentMouseState.X + "," + currentMouseState.Y, textposition.BottomMiddle, font_h, Color.Azure);          
+            DrawText("Balls Left : " + level.ballsleft, textposition.TopLeft,font_GoodDog,Color.Gray);
+            DrawText("Level " + level.number + " - " + level.name, textposition.TopMiddle, font_arial, Color.Green);
+            DrawText("Score : " + score,textposition.TopRight, font_GoodDog, Color.Gray);          
+            // DrawText("Mouse Coords : " + currentMouseState.X + "," + currentMouseState.Y, textposition.BottomMiddle, font_GoodDog, Color.Gray);          
         }
 
         private void DrawText(string msg,textposition tp,SpriteFont font,Color color)
@@ -476,25 +499,25 @@ namespace breakout
             switch (tp)
             {
                 case textposition.BottomLeft:
-                    spriteBatch.DrawString(font, msg, new Vector2(0, h - textsize.Y), color);
+                    spriteBatch.DrawString(font, msg, new Vector2(5, h - textsize.Y), color);
                     break;
                 case textposition.BottomMiddle:
                     spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), h - textsize.Y), color);
                     break;
                 case textposition.BottomRight:
-                    spriteBatch.DrawString(font, msg, new Vector2(w - textsize.X, h - textsize.Y), color);
+                    spriteBatch.DrawString(font, msg, new Vector2(w - (textsize.X + 5), h - (textsize.Y + 5)), color);
                     break;
                 case textposition.Middle:
                     spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), (h / 2) - (textsize.Y / 2)), color);
                     break;
                 case textposition.TopLeft:
-                    spriteBatch.DrawString(font, msg, new Vector2(0, 0), color);
+                    spriteBatch.DrawString(font, msg, new Vector2(5, 5), color);
                     break;
                 case textposition.TopMiddle:
-                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), 0), color);
+                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), 5), color);
                     break;
                 case textposition.TopRight:
-                    spriteBatch.DrawString(font, msg, new Vector2(w - textsize.X, 0), color);
+                    spriteBatch.DrawString(font, msg, new Vector2(w - (textsize.X+5), 5), color);
                     break;
             }
 
