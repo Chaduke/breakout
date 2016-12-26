@@ -36,7 +36,11 @@ namespace breakout
             blocksound = new SoundEffect[6];           
             LoadContent();
         }
-       
+        public enum textposition
+        {
+            TopLeft, TopMiddle, TopRight, Middle, BottomLeft, BottomMiddle, BottomRight
+        }
+
         private void LoadContent()
         {
             // load fonts              
@@ -64,6 +68,37 @@ namespace breakout
             block_lg = manager.Load<Texture2D>("Graphics\\block_lg");
             pixel = manager.Load<Texture2D>("Graphics\\pixel");
         }
-        
+
+        public static void DrawText(string msg, Color color,textposition position, SpriteFont font, SpriteBatch spritebatch, Viewport viewport)
+        {
+            Vector2 textsize = font.MeasureString(msg);           
+
+            switch (position)
+            {
+                case textposition.BottomLeft:
+                    spritebatch.DrawString(font, msg, new Vector2(5, viewport.Height - textsize.Y), color);
+                    break;
+                case textposition.BottomMiddle:
+                    spritebatch.DrawString(font, msg, new Vector2((viewport.Width / 2) - (textsize.X / 2), viewport.Height - textsize.Y), color);
+                    break;
+                case textposition.BottomRight:
+                    spritebatch.DrawString(font, msg, new Vector2(viewport.Width - (textsize.X + 5), viewport.Height - (textsize.Y + 5)), color);
+                    break;
+                case textposition.Middle:
+                    spritebatch.DrawString(font, msg, new Vector2((viewport.Width / 2) - (textsize.X / 2), (viewport.Height / 2) - (textsize.Y / 2)), color);
+                    break;
+                case textposition.TopLeft:
+                    spritebatch.DrawString(font, msg, new Vector2(5, 5), color);
+                    break;
+                case textposition.TopMiddle:
+                    spritebatch.DrawString(font, msg, new Vector2((viewport.Width / 2) - (textsize.X / 2), 5), color);
+                    break;
+                case textposition.TopRight:
+                    spritebatch.DrawString(font, msg, new Vector2(viewport.Width - (textsize.X + 5), 5), color);
+                    break;
+            }
+
+        }
+
     }
 }

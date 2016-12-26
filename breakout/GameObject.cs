@@ -11,6 +11,8 @@ namespace breakout
         public Color RGB;
         public int scorevalue;
         public int sound;
+        public int editorid;
+        public string editordesc;
         // public bool collide;
 
         public Rectangle BoundingBox
@@ -24,6 +26,13 @@ namespace breakout
         {
             this.RGB = rgb;
             this.Texture = texture;            
+        }
+        public GameObject(Color rgb, Texture2D texture,int editorid,string editordesc)
+        {
+            this.RGB = rgb;
+            this.Texture = texture;
+            this.editorid = editorid;
+            this.editordesc = editordesc;
         }
         public GameObject(Color rgb,Texture2D texture, Vector2 position)
         {

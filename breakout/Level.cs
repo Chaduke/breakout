@@ -18,8 +18,7 @@ namespace breakout
         public List<GameObject> blocksremove;
 
         public List<GameObject> balls;
-        public List<GameObject> ballsremove;
-       
+        public List<GameObject> ballsremove;       
 
         public Level(int number,string name,int width,int height,GameContent gamecontent)
         {
@@ -91,7 +90,6 @@ namespace breakout
                     block.sound = row + 3;
                     blocks.Add(block);
                 }
-
             }
         }
 

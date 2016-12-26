@@ -11,27 +11,22 @@ namespace breakout
 {
     /* TODO LIST
      
-     * embedded balls     
-     * sound and music
      * level editor    
+     * embedded balls     
+     * sound and music     
     
     */
-    
 
     public class Breakout : Game
     {
         enum gamestate
         {
             MainMenu,Editor,WaitingStart,WaitingBall,BallLaunched,GameOver
-        }
-        enum textposition
-        {
-            TopLeft,TopMiddle,TopRight,Middle,BottomLeft,BottomMiddle,BottomRight
         }        
-
+       
         gamestate currentstate;
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch; 
+        GraphicsDeviceManager graphics;        
+        SpriteBatch spritebatch; 
                
         Level level;
         GameContent gamecontent;
@@ -61,11 +56,11 @@ namespace breakout
         }
         
         protected override void Initialize()
-        {           
-            graphics.PreferredBackBufferWidth = 960;  
-            graphics.PreferredBackBufferHeight = 540;         
+        {            
+            graphics.PreferredBackBufferWidth = 960;
+            graphics.PreferredBackBufferHeight = 540;
             graphics.ApplyChanges();
-            spriteBatch = new SpriteBatch(GraphicsDevice);
+            spritebatch = new SpriteBatch(GraphicsDevice);
             gamecontent = new GameContent(Content.ServiceProvider);
 
             r = new Random();
@@ -74,7 +69,7 @@ namespace breakout
             fx_pitch = 0.0f;
             fx_pan = 0.0f;
 
-            editor = new Editor(gamecontent,spriteBatch,GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height);
+            editor = new Editor(gamecontent,spritebatch,GraphicsDevice.Viewport);
             currentstate = gamestate.Editor;
 
             score = 0;
@@ -371,42 +366,41 @@ namespace breakout
         {
             // GraphicsDevice.Clear(Color.Black);          
             
-            spriteBatch.Begin();
-            spriteBatch.Draw(gamecontent.background_sm, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+            spritebatch.Begin();
+            spritebatch.Draw(gamecontent.background_sm, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 
             switch (currentstate)
             {
                 case gamestate.MainMenu:
-                    DrawText("Main Menu", textposition.TopMiddle, gamecontent.font_GoodDog, Color.MonoGameOrange);
+                    GameContent.DrawText("Main Menu", Color.MonoGameOrange,GameContent.textposition.TopMiddle, gamecontent.font_GoodDog,spritebatch,GraphicsDevice.Viewport);
                     break;
                 case gamestate.Editor:
-                    editor.Draw(currentMouseState);
-                    DrawText("Level Editor", textposition.BottomMiddle, gamecontent.font_GoodDog, Color.MonoGameOrange);
-                                        
+                    editor.Draw();
+                    GameContent.DrawText("Level Editor", Color.MonoGameOrange, GameContent.textposition.BottomMiddle, gamecontent.font_GoodDog,spritebatch, GraphicsDevice.Viewport);                                        
                     break;
                 case gamestate.WaitingBall:
-                    DrawText("Left Click to Launch Ball", textposition.Middle, gamecontent.font_GoodDog, Color.MonoGameOrange);                   
-                    level.paddle.Draw(spriteBatch);
+                    GameContent.DrawText("Left Click to Launch Ball", Color.MonoGameOrange, GameContent.textposition.Middle, gamecontent.font_GoodDog,spritebatch, GraphicsDevice.Viewport);                   
+                    level.paddle.Draw(spritebatch);
                     DrawBlocks();
                     DrawGameInfo();
                     break;
                 case gamestate.BallLaunched:                    
-                    level.paddle.Draw(spriteBatch);
+                    level.paddle.Draw(spritebatch);
                     DrawBlocks();
                     // draw balls
                     foreach (GameObject ball in level.balls)
                     {
-                        ball.Draw(spriteBatch);
+                        ball.Draw(spritebatch);
                     }
                     DrawGameInfo();
                     break;
                 case gamestate.GameOver:
-                    DrawBlocks();                    
-                    DrawText("Game Over",textposition.Middle, gamecontent.font_GoodDog, Color.Red);                    
+                    DrawBlocks();
+                    GameContent.DrawText("Game Over", Color.Red, GameContent.textposition.Middle, gamecontent.font_GoodDog, spritebatch, GraphicsDevice.Viewport);                    
                     DrawGameInfo();
                     break;
             }
-            spriteBatch.End();
+            spritebatch.End();
             base.Draw(gameTime);
         }
         
@@ -415,49 +409,17 @@ namespace breakout
             // draw blocks
             foreach (GameObject block in level.blocks)
             {
-                block.Draw(spriteBatch);
+                block.Draw(spritebatch);
             }
         }
         private void DrawGameInfo()
         {
             // draw game info
-            DrawText("Balls Left : " + ballsleft, textposition.TopLeft,gamecontent.font_GoodDog,Color.Gray);
-            DrawText("Level " + level.number + " - " + level.name, textposition.TopMiddle, gamecontent.font_arial, Color.Green);
-            DrawText("Score : " + score,textposition.TopRight, gamecontent.font_GoodDog, Color.Gray);          
-            // DrawText("Mouse Coords : " + currentMouseState.X + "," + currentMouseState.Y, textposition.BottomMiddle, font_GoodDog, Color.Gray);          
+            GameContent.DrawText("Score : " + score, Color.Gray, GameContent.textposition.TopLeft, gamecontent.font_GoodDog, spritebatch, GraphicsDevice.Viewport);
+            GameContent.DrawText("Balls Left : " + ballsleft, Color.Gray, GameContent.textposition.TopRight,gamecontent.font_GoodDog, spritebatch, GraphicsDevice.Viewport);
+            GameContent.DrawText("Level " + level.number + " - " + level.name, Color.Green, GameContent.textposition.TopMiddle, gamecontent.font_arial, spritebatch, GraphicsDevice.Viewport); 
         }
 
-        private void DrawText(string msg,textposition tp,SpriteFont font,Color color)
-        {
-            Vector2 textsize = font.MeasureString(msg);
-            int w = GraphicsDevice.Viewport.Width;
-            int h = GraphicsDevice.Viewport.Height;
-
-            switch (tp)
-            {
-                case textposition.BottomLeft:
-                    spriteBatch.DrawString(font, msg, new Vector2(5, h - textsize.Y), color);
-                    break;
-                case textposition.BottomMiddle:
-                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), h - textsize.Y), color);
-                    break;
-                case textposition.BottomRight:
-                    spriteBatch.DrawString(font, msg, new Vector2(w - (textsize.X + 5), h - (textsize.Y + 5)), color);
-                    break;
-                case textposition.Middle:
-                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), (h / 2) - (textsize.Y / 2)), color);
-                    break;
-                case textposition.TopLeft:
-                    spriteBatch.DrawString(font, msg, new Vector2(5, 5), color);
-                    break;
-                case textposition.TopMiddle:
-                    spriteBatch.DrawString(font, msg, new Vector2((w / 2) - (textsize.X / 2), 5), color);
-                    break;
-                case textposition.TopRight:
-                    spriteBatch.DrawString(font, msg, new Vector2(w - (textsize.X+5), 5), color);
-                    break;
-            }
-
-        }
+        
     }
 }
