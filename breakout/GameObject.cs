@@ -20,7 +20,11 @@ namespace breakout
                 return new Rectangle((int)Position.X, (int)Position.Y, Texture.Width, Texture.Height);
             }
         }
-
+        public GameObject(Color rgb, Texture2D texture)
+        {
+            this.RGB = rgb;
+            this.Texture = texture;            
+        }
         public GameObject(Color rgb,Texture2D texture, Vector2 position)
         {
             this.RGB = rgb;

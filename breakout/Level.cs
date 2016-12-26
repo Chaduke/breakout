@@ -6,50 +6,39 @@ namespace breakout
 {
     class Level
     {
+        public int width;
+        public int height;
         public int number;
         public string name;
+
+        public GameObject paddle;
+        public GameContent gamecontent;
+
         public List<GameObject> blocks;
         public List<GameObject> blocksremove;
 
         public List<GameObject> balls;
         public List<GameObject> ballsremove;
+       
 
-        public int ballsleft;
-
-        public void Reload(Texture2D blocktexture,Texture2D balltexture,bool full)
+        public Level(int number,string name,int width,int height,GameContent gamecontent)
         {
-            foreach(GameObject block in blocks)
-            {
-                block.Texture = blocktexture;
-                if (full)
-                {
-                    block.Position.X *= 2;
-                    block.Position.Y *= 2;
-                }
-                else
-                {
-                    block.Position.X /= 2;
-                    block.Position.Y /= 2;
-                }
-            }
-            foreach (GameObject ball in balls)
-            {
-                ball.Texture = balltexture;
-                if (full)
-                {
-                    ball.Position.X *= 2;
-                    ball.Position.Y *= 2;
-                }
-                else
-                {
-                    ball.Position.X /= 2;
-                    ball.Position.Y /= 2;
-                }
-            }
+            this.number = number;
+            this.name = name;
+            this.width = width;
+            this.height = height;
+            this.gamecontent = gamecontent;
+
+            paddle = new GameObject(Color.AliceBlue,gamecontent.paddle_sm,new Vector2(width/2,height-(gamecontent.paddle_sm.Height * 2)));
+            
+            blocks = new List<GameObject>();
+            blocksremove = new List<GameObject>();
+            balls = new List<GameObject>();
+            ballsremove = new List<GameObject>();            
         }
-
-        public void Create(Texture2D blockTexture)
+        public void Create()
         {
+            Texture2D blockTexture = gamecontent.block_sm;
             // setup first row set
             for (int row = 0; row < 3; row++)
             {
@@ -68,7 +57,7 @@ namespace breakout
                             break;
                         case 2:
                             c = Color.Yellow;
-                            break;                       
+                            break;
                     }
                     GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
                     block.scorevalue = 100 - (row * 10);
@@ -76,7 +65,8 @@ namespace breakout
                     blocks.Add(block);
                 }
             }
-            // steup second row set
+
+            // setup second row set
             for (int row = 0; row < 3; row++)
             {
                 for (int col = 0; col < 40; col++)
@@ -94,7 +84,7 @@ namespace breakout
                             break;
                         case 2:
                             c = Color.Purple;
-                            break;                       
+                            break;
                     }
                     GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
                     block.scorevalue = 50 - (row * 10);
@@ -104,6 +94,41 @@ namespace breakout
 
             }
         }
+
+        public void Reload(bool full)
+        {
+            foreach(GameObject block in blocks)
+            {
+                
+                if (full)
+                {
+                    block.Texture = gamecontent.block_lg;
+                    block.Position.X *= 2;
+                    block.Position.Y *= 2;
+                }
+                else
+                {
+                    block.Texture = gamecontent.block_sm;
+                    block.Position.X /= 2;
+                    block.Position.Y /= 2;
+                }
+            }
+            foreach (GameObject ball in balls)
+            {                
+                if (full)
+                {
+                    ball.Texture = gamecontent.ball_lg;
+                    ball.Position.X *= 2;
+                    ball.Position.Y *= 2;
+                }
+                else
+                {
+                    ball.Texture = gamecontent.ball_sm;
+                    ball.Position.X /= 2;
+                    ball.Position.Y /= 2;
+                }
+            }
+        }       
 
     }
 }  

@@ -16,6 +16,7 @@ namespace breakout
      * level editor    
     
     */
+    
 
     public class Breakout : Game
     {
@@ -30,19 +31,12 @@ namespace breakout
 
         gamestate currentstate;
         GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
-        SpriteFont font_arial;
-        SpriteFont font_GoodDog;
-        GameObject paddle;        
-        int score;
+        SpriteBatch spriteBatch; 
                
-        Level level;          
-        Random r;
+        Level level;
+        GameContent gamecontent;
+        Editor editor;
 
-        // sounds
-        SoundEffect paddlesound;
-        SoundEffect[] blocksound;
-        SoundEffect wallsound;
         Single fx_volume, fx_pitch, fx_pan;
 
         // Keyboard states used to determine key presses
@@ -57,91 +51,39 @@ namespace breakout
         MouseState currentMouseState;
         MouseState previousMouseState;
 
-        Texture2D background;
-        Texture2D balltexture;
-        Texture2D blocktexture;
-        Texture2D paddletexture;
-        Texture2D pixel;
-
+        Random r;
+        int score;
+        int ballsleft;
+              
         public Breakout()
         {
-            graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
+            graphics = new GraphicsDeviceManager(this);            
         }
         
         protected override void Initialize()
-        {
-           
-            graphics.PreferredBackBufferWidth = 960;  // set this value to the desired width of your window
-            graphics.PreferredBackBufferHeight = 540;   // set this value to the desired height of your window            
+        {           
+            graphics.PreferredBackBufferWidth = 960;  
+            graphics.PreferredBackBufferHeight = 540;         
             graphics.ApplyChanges();
-            currentstate = gamestate.WaitingBall;
-            score = 0;
-            r = new Random();            
-            level = new Level();
-            level.number = 1;
-            level.name = "Getting Started";
-            level.blocks = new List<GameObject>();
-            level.blocksremove = new List<GameObject>();
-            level.balls = new List<GameObject>();
-            level.ballsremove = new List<GameObject>();
-            level.ballsleft = 3;
+            spriteBatch = new SpriteBatch(GraphicsDevice);
+            gamecontent = new GameContent(Content.ServiceProvider);
 
-            blocksound = new SoundEffect[6];
-            fx_volume = 0.0f;
+            r = new Random();
+            
+            fx_volume = 0.2f;
             fx_pitch = 0.0f;
             fx_pan = 0.0f;
-            
+
+            editor = new Editor(gamecontent,spriteBatch,GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height);
+            currentstate = gamestate.Editor;
+
+            score = 0;
+            ballsleft = 5;
+            level = new Level(1, "New Beginnings",GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height,gamecontent);
+            level.Create();  
+
             base.Initialize();
         }
-       
-        protected override void LoadContent()
-        {
-            // Create a new SpriteBatch, which can be used to draw textures.
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-            // load fonts
-            font_arial=Content.Load<SpriteFont>("Fonts\\Arial");
-            font_GoodDog = Content.Load<SpriteFont>("Fonts\\GoodDog");
-            // load sounds
-            paddlesound = Content.Load<SoundEffect>("Audio\\c6");
-            
-            blocksound[0] = Content.Load<SoundEffect>("Audio\\d7");
-            blocksound[1] = Content.Load<SoundEffect>("Audio\\e7");
-            blocksound[2] = Content.Load<SoundEffect>("Audio\\f7");
-            blocksound[3] = Content.Load<SoundEffect>("Audio\\g7");
-            blocksound[4] = Content.Load<SoundEffect>("Audio\\a6");
-            blocksound[5] = Content.Load<SoundEffect>("Audio\\b6");
-
-            wallsound = Content.Load<SoundEffect>("Audio\\c7");
-            // load graphics
-            LoadGraphics("sm");
-            level.Create(blocktexture);
-        }
-        private void LoadGraphics(string ScreenSize)
-        {
-            background = Content.Load<Texture2D>("Graphics\\background_" + ScreenSize);
-            paddletexture = Content.Load<Texture2D>("Graphics\\paddle_" + ScreenSize);
-            Vector2 paddlePosition = new Vector2(GraphicsDevice.Viewport.Width / 2, GraphicsDevice.Viewport.Height - 50);
-            paddle = new GameObject(Color.White, paddletexture, paddlePosition);
-            balltexture = Content.Load<Texture2D>("Graphics\\ball_" + ScreenSize);
-            blocktexture = Content.Load<Texture2D>("Graphics\\block_" + ScreenSize);           
-            pixel = Content.Load<Texture2D>("Graphics\\pixel");
-        }
-
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// game-specific content.
-        /// </summary>
-        protected override void UnloadContent()
-        {
-            // TODO: Unload any non ContentManager content here
-        }
-
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         
         protected override void Update(GameTime gameTime)
         {
@@ -163,6 +105,7 @@ namespace breakout
                 case gamestate.MainMenu:
                     break;
                 case gamestate.Editor:
+                    editor.Update(currentMouseState);
                     break;
                 case gamestate.WaitingBall:
                     UpdatePaddle(gameTime);
@@ -187,9 +130,8 @@ namespace breakout
                     graphics.PreferredBackBufferWidth = 960;
                     graphics.PreferredBackBufferHeight = 540;
                     graphics.ApplyChanges();
-                    graphics.ToggleFullScreen();
-                    LoadGraphics("sm");
-                    level.Reload(blocktexture,balltexture, false);
+                    graphics.ToggleFullScreen();                    
+                    level.Reload(false);
                 }
                 else
                 {
@@ -197,9 +139,8 @@ namespace breakout
                     graphics.PreferredBackBufferWidth = 1920;
                     graphics.PreferredBackBufferHeight = 1080;
                     graphics.ApplyChanges();                   
-                    graphics.ToggleFullScreen();
-                    LoadGraphics("lg");
-                    level.Reload(blocktexture,balltexture, true);
+                    graphics.ToggleFullScreen();                    
+                    level.Reload(true);
                 }
             }
             // Switch to Main Menu
@@ -231,13 +172,25 @@ namespace breakout
             {
                 if (currentstate == gamestate.WaitingBall)
                 {
-                    level.balls.Add(new GameObject(Color.Yellow, balltexture, new Vector2(r.Next(0, GraphicsDevice.Viewport.Width), GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(-7, 7), r.Next(-7, -5))));
+                    if (graphics.IsFullScreen)
+                    {
+                        level.balls.Add(new GameObject(Color.Yellow, gamecontent.ball_lg,
+                            new Vector2(r.Next(0, GraphicsDevice.Viewport.Width),
+                            GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(-7, 7), r.Next(-7, -5))));
+                    }
+                    else
+                    {
+                        level.balls.Add(new GameObject(Color.Yellow, gamecontent.ball_sm,
+                            new Vector2(r.Next(0, GraphicsDevice.Viewport.Width),
+                            GraphicsDevice.Viewport.Height - 100), new Vector2(r.Next(-7, 7), r.Next(-7, -5))));
+                    }
+                        
                     currentstate = gamestate.BallLaunched;
                 }
 
                 if (currentstate == gamestate.GameOver)
                 {
-                    level.ballsleft = 3;
+                    ballsleft = 5;
                     score = 0;  
                     currentstate = gamestate.WaitingBall;
                     foreach(GameObject ball in level.balls)
@@ -256,7 +209,7 @@ namespace breakout
                     {
                         level.blocks.Remove(block);
                     }
-                    level.Create(blocktexture);
+                    level.Create();
                 }
 
             }
@@ -266,97 +219,95 @@ namespace breakout
 
         private void UpdateBalls(GameTime gameTime)
         {
-            try
+            foreach (GameObject ball in level.balls)
             {
-                foreach (GameObject ball in level.balls)
+                ball.Position.X += ball.Velocity.X;
+                ball.Position.Y += ball.Velocity.Y;
+                Single fx_pan = ((ball.Position.X * 2) / GraphicsDevice.Viewport.Width) - 1;
+                if (fx_pan < -1.0f) fx_pan = -1.0f;
+                if (fx_pan > 1.0f) fx_pan = 1.0f;
+
+                if (ball.Position.X > GraphicsDevice.Viewport.Width - ball.Texture.Width)
                 {
-                    ball.Position.X += ball.Velocity.X;
-                    ball.Position.Y += ball.Velocity.Y;
-                    if (ball.Position.X > GraphicsDevice.Viewport.Width - ball.Texture.Width)
-                    {
-                        // bounce off right wall
-                        wallsound.Play(fx_volume,fx_pitch,fx_pan);
-                        ball.Velocity.X = -ball.Velocity.X;
-                        ball.Position.X = GraphicsDevice.Viewport.Width - ball.Texture.Width;
-                    }
-                    if (ball.Position.X < 0)
-                    {
-                        // bounce off left wall
-                        wallsound.Play(fx_volume, fx_pitch, fx_pan);
-                        ball.Velocity.X = -ball.Velocity.X;
-                        ball.Position.X = 0;
-                    }
-                    if (ball.Position.Y > GraphicsDevice.Viewport.Height - ball.Texture.Height)
-                    {
-                        // hit the floor
-                        level.ballsremove.Add(ball);
-                        continue;
-                    }
-                    if (ball.Position.Y < 0)
-                    {
-                        // bounce off top wall
-                        wallsound.Play(fx_volume, fx_pitch, fx_pan);
-                        ball.Velocity.Y = -ball.Velocity.Y;
-                        ball.Position.Y = 0;
-                    }
-                    if ((ball.Position.Y + ball.Texture.Height > paddle.Position.Y) && (ball.Position.X + ball.Texture.Width > paddle.Position.X) && (ball.Position.X < paddle.Position.X + paddle.Texture.Width))
-                    {
-                        paddlesound.Play(fx_volume, fx_pitch, fx_pan);
-                        ball.Position.Y = paddle.Position.Y - ball.Texture.Height;
-                        ball.Velocity.Y = -ball.Velocity.Y;
+                    // bounce off right wall                    
+                    gamecontent.wallsound.Play(fx_volume,fx_pitch,fx_pan);
+                    ball.Velocity.X = -ball.Velocity.X;
+                    ball.Position.X = GraphicsDevice.Viewport.Width - ball.Texture.Width;
+                }
+                if (ball.Position.X < 0)
+                {
+                    // bounce off left wall
+                    gamecontent.wallsound.Play(fx_volume, fx_pitch, fx_pan);
+                    ball.Velocity.X = -ball.Velocity.X;
+                    ball.Position.X = 0;
+                }
+                if (ball.Position.Y > GraphicsDevice.Viewport.Height - ball.Texture.Height)
+                {
+                    // hit the floor
+                    level.ballsremove.Add(ball);
+                    continue;
+                }
+                if (ball.Position.Y < 0)
+                {
+                    // bounce off top wall
+                    gamecontent.wallsound.Play(fx_volume, fx_pitch, fx_pan);
+                    ball.Velocity.Y = -ball.Velocity.Y;
+                    ball.Position.Y = 0;
+                }
+                if ((ball.Position.Y + ball.Texture.Height > level.paddle.Position.Y) && (ball.Position.X + ball.Texture.Width > level.paddle.Position.X) && (ball.Position.X < level.paddle.Position.X + level.paddle.Texture.Width))
+                {                    
+                    gamecontent.paddlesound.Play(fx_volume, fx_pitch, fx_pan);
+                    ball.Position.Y = level.paddle.Position.Y - ball.Texture.Height;
+                    ball.Velocity.Y = -ball.Velocity.Y;
 
-                        // find center of ball and paddle
-                        int ballcenter = (int)(ball.Position.X) + (ball.Texture.Width / 2);
-                        int paddlecenter = (int)(paddle.Position.X) + (paddle.Texture.Width / 2);
-                        int paddleside = ballcenter - paddlecenter;
-                        ball.Velocity.X = paddleside / 2;                       
+                    // find center of ball and paddle
+                    int ballcenter = (int)(ball.Position.X) + (ball.Texture.Width / 2);
+                    int paddlecenter = (int)(level.paddle.Position.X) + (level.paddle.Texture.Width / 2);
+                    int paddleside = ballcenter - paddlecenter;
+                    ball.Velocity.X = paddleside / 2;                       
 
-                        // increase horizontal ball speed
-                        if (ball.Velocity.X < 0)
-                        {
-                            ball.Velocity.X -= 0.2f;
+                    // increase horizontal ball speed
+                    if (ball.Velocity.X < 0)
+                    {
+                        ball.Velocity.X -= 0.2f;
+                    }
+                    else
+                    {
+                        ball.Velocity.X += 0.2f;
+                    }
+                }
+                // ball collisions with blocks
+                foreach (GameObject block in level.blocks)
+                {
+                    if (ball.BoundingBox.Intersects(block.BoundingBox))
+                    {
+                        Debug.Print("Panning is {0}", fx_pan);
+                        gamecontent.blocksound[block.sound].Play(fx_volume, fx_pitch, fx_pan);
+                        if (ball.Velocity.Y < 0)
+                        {                                
+                            ball.Velocity.Y -= 0.01f;
                         }
                         else
                         {
-                            ball.Velocity.X += 0.2f;
+                            ball.Velocity.Y += 0.01f;
                         }
-                    }
-                    // ball collisions with blocks
-                    foreach (GameObject block in level.blocks)
-                    {
-                        if (ball.BoundingBox.Intersects(block.BoundingBox))
-                        {
-                            blocksound[block.sound].Play(fx_volume, fx_pitch, fx_pan);
-                            if (ball.Velocity.Y < 0)
-                            {                                
-                                ball.Velocity.Y -= 0.01f;
-                            }
-                            else
-                            {
-                                ball.Velocity.Y += 0.01f;
-                            }
-                            ball.Velocity.Y = -ball.Velocity.Y;
-                            level.blocksremove.Add(block);
-                            score += block.scorevalue;
-                            break;
-                        }
-                    }
-                    foreach (GameObject block in level.blocksremove)
-                    {
-                        level.blocks.Remove(block);
-                    }
-                    if (level.blocks.Count == 0)
-                    {
-                        // advance level
-                        level.Create(blocktexture);
+                        ball.Velocity.Y = -ball.Velocity.Y;
+                        level.blocksremove.Add(block);
+                        score += block.scorevalue;
+                        break;
                     }
                 }
-            }
-            catch(Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
+                foreach (GameObject block in level.blocksremove)
+                {
+                    level.blocks.Remove(block);
+                }
+                if (level.blocks.Count == 0)
+                {
+                    // advance level
+                    level.Create();
+                }
+            }  
 
-            }
             foreach(GameObject ball in level.ballsremove)
             {
                 level.balls.Remove(ball);
@@ -365,9 +316,9 @@ namespace breakout
             {
                 if (currentstate == gamestate.BallLaunched)
                 {
-                    level.ballsleft--;
+                    ballsleft--;
                     currentstate = gamestate.WaitingBall;
-                    if (level.ballsleft ==0)
+                    if (ballsleft ==0)
                     {
                         currentstate = gamestate.GameOver;
                     }
@@ -404,11 +355,11 @@ namespace breakout
             }
                         
             */
-            paddle.Position.X = currentMouseState.X;
+            level.paddle.Position.X = currentMouseState.X;
             // paddle.Position.Y = currentMouseState.Y;
 
             // Make sure that the paddle does not go out of bounds
-            paddle.Position.X = MathHelper.Clamp(paddle.Position.X, 0, GraphicsDevice.Viewport.Width - paddle.Texture.Width);
+            level.paddle.Position.X = MathHelper.Clamp(level.paddle.Position.X, 0, GraphicsDevice.Viewport.Width - level.paddle.Texture.Width);
             // paddle.Position.Y = MathHelper.Clamp(paddle.Position.Y, GraphicsDevice.Viewport.Height - (GraphicsDevice.Viewport.Height / 4), GraphicsDevice.Viewport.Height  - (paddle.Texture.Height * 2));
             
         }
@@ -421,25 +372,26 @@ namespace breakout
             // GraphicsDevice.Clear(Color.Black);          
             
             spriteBatch.Begin();
-            spriteBatch.Draw(background, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(gamecontent.background_sm, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 
             switch (currentstate)
             {
                 case gamestate.MainMenu:
-                    DrawText("Main Menu", textposition.TopMiddle, font_GoodDog, Color.DarkOliveGreen);
+                    DrawText("Main Menu", textposition.TopMiddle, gamecontent.font_GoodDog, Color.MonoGameOrange);
                     break;
                 case gamestate.Editor:
-                    DrawGrid(spriteBatch);
-                    DrawText("Level Editor", textposition.TopMiddle,font_GoodDog, Color.DarkOliveGreen);                    
+                    editor.Draw(currentMouseState);
+                    DrawText("Level Editor", textposition.BottomMiddle, gamecontent.font_GoodDog, Color.MonoGameOrange);
+                                        
                     break;
                 case gamestate.WaitingBall:
-                    DrawText("Left Click to Launch Ball", textposition.Middle, font_GoodDog, Color.DarkOliveGreen);                   
-                    paddle.Draw(spriteBatch);
+                    DrawText("Left Click to Launch Ball", textposition.Middle, gamecontent.font_GoodDog, Color.MonoGameOrange);                   
+                    level.paddle.Draw(spriteBatch);
                     DrawBlocks();
                     DrawGameInfo();
                     break;
                 case gamestate.BallLaunched:                    
-                    paddle.Draw(spriteBatch);
+                    level.paddle.Draw(spriteBatch);
                     DrawBlocks();
                     // draw balls
                     foreach (GameObject ball in level.balls)
@@ -450,28 +402,14 @@ namespace breakout
                     break;
                 case gamestate.GameOver:
                     DrawBlocks();                    
-                    DrawText("Game Over",textposition.Middle, font_GoodDog, Color.Red);                    
+                    DrawText("Game Over",textposition.Middle, gamecontent.font_GoodDog, Color.Red);                    
                     DrawGameInfo();
                     break;
             }
             spriteBatch.End();
             base.Draw(gameTime);
         }
-        private void DrawGrid(SpriteBatch spriteBatch)            
-        {
-            for(int x = 1; x < GraphicsDevice.Viewport.Width / blocktexture.Width; x++)
-            {
-                for(int y = 1; y< GraphicsDevice.Viewport.Height / blocktexture.Height; y++)
-                {
-                    Line l1 = new Line(new Vector2(x * blocktexture.Width, 0),new Vector2(x * blocktexture.Width, GraphicsDevice.Viewport.Height),1,Color.Gray, pixel);
-                    Line l2 = new Line(new Vector2(0, y * blocktexture.Height), new Vector2(GraphicsDevice.Viewport.Width, y * blocktexture.Height), 1, Color.Gray, pixel);
-                    l1.Update();
-                    l1.Draw(spriteBatch);
-                    l2.Update();
-                    l2.Draw(spriteBatch);
-                }
-            }
-        }
+        
         private void DrawBlocks()
         {
             // draw blocks
@@ -482,11 +420,10 @@ namespace breakout
         }
         private void DrawGameInfo()
         {
-
             // draw game info
-            DrawText("Balls Left : " + level.ballsleft, textposition.TopLeft,font_GoodDog,Color.Gray);
-            DrawText("Level " + level.number + " - " + level.name, textposition.TopMiddle, font_arial, Color.Green);
-            DrawText("Score : " + score,textposition.TopRight, font_GoodDog, Color.Gray);          
+            DrawText("Balls Left : " + ballsleft, textposition.TopLeft,gamecontent.font_GoodDog,Color.Gray);
+            DrawText("Level " + level.number + " - " + level.name, textposition.TopMiddle, gamecontent.font_arial, Color.Green);
+            DrawText("Score : " + score,textposition.TopRight, gamecontent.font_GoodDog, Color.Gray);          
             // DrawText("Mouse Coords : " + currentMouseState.X + "," + currentMouseState.Y, textposition.BottomMiddle, font_GoodDog, Color.Gray);          
         }
 

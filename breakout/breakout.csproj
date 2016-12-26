@@ -39,6 +39,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Breakout.cs" />
+    <Compile Include="GameContent.cs" />
+    <Compile Include="Editor.cs" />
     <Compile Include="GameObject.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Line.cs" />
