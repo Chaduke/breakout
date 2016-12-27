@@ -16,6 +16,9 @@ namespace breakout
         private MouseState previousmousestate;
         private Vector2 snapped;
         public Level level;
+
+        private bool ongrid;
+
         public Editor(GameContent gamecontent,SpriteBatch spritebatch,Viewport viewport)
         {
             this.gamecontent = gamecontent;
@@ -41,18 +44,27 @@ namespace breakout
             if (wheelchange!=0)
             {
                 if (wheelchange > 0) cursorindex++; else cursorindex--;
-                if (cursorindex > 6) cursorindex = 0;
-                if (cursorindex < 0) cursorindex = 6;                
-            }            
-            
-            // snap cursor to grid
-            snapped.X = (int)(currentmousestate.Position.X / gamecontent.block_sm.Width) * gamecontent.block_sm.Width;
-            snapped.Y = 1 + (int)(currentmousestate.Position.Y / gamecontent.block_sm.Height) * gamecontent.block_sm.Height;
-            cursor[cursorindex].Position = snapped;
+                cursorindex = MathHelper.Clamp(cursorindex, 0, 6);
+                //  if (cursorindex > 6) cursorindex = 0;
+                // if (cursorindex < 0) cursorindex = 6;                
+            }
 
-            if (currentmousestate.LeftButton == ButtonState.Pressed && previousmousestate.LeftButton == ButtonState.Released)
+            // if on grid, snap cursor to grid, otherwise draw a mouse pointer
+            if (currentmousestate.Position.Y < viewport.Height - (gamecontent.block_sm.Height * 8))
             {
-                level.blocks.Add(new GameObject(cursor[cursorindex].RGB, cursor[cursorindex].Texture, cursor[cursorindex].Position));
+                snapped.X = (int)(currentmousestate.Position.X / gamecontent.block_sm.Width) * gamecontent.block_sm.Width;
+                snapped.Y = 1 + (int)(currentmousestate.Position.Y / gamecontent.block_sm.Height) * gamecontent.block_sm.Height;
+                cursor[cursorindex].Position = snapped;
+
+                if (currentmousestate.LeftButton == ButtonState.Pressed && previousmousestate.LeftButton == ButtonState.Released)
+                {
+                    level.blocks.Add(new GameObject(cursor[cursorindex].RGB, cursor[cursorindex].Texture, cursor[cursorindex].Position));
+                }
+                ongrid = true;
+            }
+            else
+            {
+                ongrid = false;
             }
             // finish update
             previousmousestate = currentmousestate;
@@ -61,13 +73,20 @@ namespace breakout
         public void Draw()
         {            
             DrawGrid();
-            GameContent.DrawText(cursor[cursorindex].editordesc, cursor[cursorindex].RGB, GameContent.textposition.BottomLeft, gamecontent.font_GoodDog,spritebatch,viewport);
-            foreach(GameObject block in level.blocks)
+            foreach (GameObject block in level.blocks)
             {
                 block.Draw(spritebatch);
             }
-            cursor[cursorindex].Draw(spritebatch);
-
+            if (ongrid)
+            {
+                GameContent.DrawText(cursor[cursorindex].editordesc, cursor[cursorindex].RGB, GameContent.textposition.BottomLeft, gamecontent.font_GoodDog, spritebatch, viewport);
+                cursor[cursorindex].Draw(spritebatch);
+            }
+            else
+            {
+                GameContent.DrawText("Current Level : " + level.number, Color.White, GameContent.textposition.BottomLeft, gamecontent.font_GoodDog, spritebatch, viewport);
+                spritebatch.Draw(gamecontent.pointer, new Vector2(currentmousestate.X,currentmousestate.Y),Color.White);
+            }   
         }
         private void DrawGrid()
         {

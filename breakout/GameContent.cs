@@ -29,6 +29,7 @@ namespace breakout
         public Texture2D paddle_sm;
         public Texture2D paddle_lg;
         public Texture2D pixel;
+        public Texture2D pointer;
 
         public GameContent(IServiceProvider provider)
         {
@@ -67,6 +68,7 @@ namespace breakout
             block_sm = manager.Load<Texture2D>("Graphics\\block_sm");
             block_lg = manager.Load<Texture2D>("Graphics\\block_lg");
             pixel = manager.Load<Texture2D>("Graphics\\pixel");
+            pointer = manager.Load<Texture2D>("Graphics\\pointer");
         }
 
         public static void DrawText(string msg, Color color,textposition position, SpriteFont font, SpriteBatch spritebatch, Viewport viewport)

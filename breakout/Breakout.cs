@@ -157,10 +157,10 @@ namespace breakout
             if (currentKeyboardState.IsKeyDown(Keys.Escape)) Exit();
 
             // Lock mouse to game window
-            if (currentMouseState.X < 0) Mouse.SetPosition(0, currentMouseState.Y);
-            if (currentMouseState.X > GraphicsDevice.Viewport.Width) Mouse.SetPosition(GraphicsDevice.Viewport.Width, currentMouseState.Y);
-            if (currentMouseState.Y < 0) Mouse.SetPosition(currentMouseState.X, 0);
-            if (currentMouseState.Y > GraphicsDevice.Viewport.Height) Mouse.SetPosition(currentMouseState.X, GraphicsDevice.Viewport.Height);
+            // if (currentMouseState.X < 0) Mouse.SetPosition(0, currentMouseState.Y);
+            // if (currentMouseState.X > GraphicsDevice.Viewport.Width) Mouse.SetPosition(GraphicsDevice.Viewport.Width, currentMouseState.Y);
+            // if (currentMouseState.Y < 0) Mouse.SetPosition(currentMouseState.X, 0);
+            // if (currentMouseState.Y > GraphicsDevice.Viewport.Height) Mouse.SetPosition(currentMouseState.X, GraphicsDevice.Viewport.Height);
 
             // add ball on click
             if (currentMouseState.LeftButton == ButtonState.Pressed)
@@ -375,8 +375,7 @@ namespace breakout
                     GameContent.DrawText("Main Menu", Color.MonoGameOrange,GameContent.textposition.TopMiddle, gamecontent.font_GoodDog,spritebatch,GraphicsDevice.Viewport);
                     break;
                 case gamestate.Editor:
-                    editor.Draw();
-                    GameContent.DrawText("Level Editor", Color.MonoGameOrange, GameContent.textposition.BottomMiddle, gamecontent.font_GoodDog,spritebatch, GraphicsDevice.Viewport);                                        
+                    editor.Draw();                    
                     break;
                 case gamestate.WaitingBall:
                     GameContent.DrawText("Left Click to Launch Ball", Color.MonoGameOrange, GameContent.textposition.Middle, gamecontent.font_GoodDog,spritebatch, GraphicsDevice.Viewport);                   
