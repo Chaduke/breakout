@@ -18,7 +18,7 @@ namespace breakout
         public List<GameObject> blocksremove;
 
         public List<GameObject> balls;
-        public List<GameObject> ballsremove;       
+        public List<GameObject> ballsremove;  
 
         public Level(int number,string name,int width,int height,GameContent gamecontent)
         {
@@ -35,13 +35,24 @@ namespace breakout
             balls = new List<GameObject>();
             ballsremove = new List<GameObject>();            
         }
+        public void Clear()
+        {
+            foreach(GameObject block in blocks)
+            {
+                blocksremove.Add(block);
+            }
+            foreach(GameObject block in blocksremove)
+            {
+                blocks.Remove(block);
+            }
+        }
         public void Create()
         {
             Texture2D blockTexture = gamecontent.block_sm;
             // setup first row set
-            for (int row = 0; row < 3; row++)
+            for (short row = 0; row < 3; row++)
             {
-                for (int col = 0; col < 40; col++)
+                for (short col = 0; col < 40; col++)
                 {
                     int x = (blockTexture.Width * col);
                     int y = (blockTexture.Height * 5) + (row * blockTexture.Height);
@@ -59,16 +70,16 @@ namespace breakout
                             break;
                     }
                     GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
-                    block.scorevalue = 100 - (row * 10);
+                    block.scorevalue = (short)(100 - (row * 10));
                     block.sound = row;
                     blocks.Add(block);
                 }
             }
 
             // setup second row set
-            for (int row = 0; row < 3; row++)
+            for (short row = 0; row < 3; row++)
             {
-                for (int col = 0; col < 40; col++)
+                for (short col = 0; col < 40; col++)
                 {
                     int x = (blockTexture.Width * col);
                     int y = (blockTexture.Height * 12) + (row * blockTexture.Height);
@@ -86,8 +97,8 @@ namespace breakout
                             break;
                     }
                     GameObject block = new GameObject(c, blockTexture, new Vector2(x, y));
-                    block.scorevalue = 50 - (row * 10);
-                    block.sound = row + 3;
+                    block.scorevalue = (short)(50 - (row * 10));
+                    block.sound = (short)(row + 3);
                     blocks.Add(block);
                 }
             }
@@ -100,30 +111,30 @@ namespace breakout
                 
                 if (full)
                 {
-                    block.Texture = gamecontent.block_lg;
-                    block.Position.X *= 2;
-                    block.Position.Y *= 2;
+                    block.texture = gamecontent.block_lg;
+                    block.position.X *= 2;
+                    block.position.Y *= 2;
                 }
                 else
                 {
-                    block.Texture = gamecontent.block_sm;
-                    block.Position.X /= 2;
-                    block.Position.Y /= 2;
+                    block.texture = gamecontent.block_sm;
+                    block.position.X /= 2;
+                    block.position.Y /= 2;
                 }
             }
             foreach (GameObject ball in balls)
             {                
                 if (full)
                 {
-                    ball.Texture = gamecontent.ball_lg;
-                    ball.Position.X *= 2;
-                    ball.Position.Y *= 2;
+                    ball.texture = gamecontent.ball_lg;
+                    ball.position.X *= 2;
+                    ball.position.Y *= 2;
                 }
                 else
                 {
-                    ball.Texture = gamecontent.ball_sm;
-                    ball.Position.X /= 2;
-                    ball.Position.Y /= 2;
+                    ball.texture = gamecontent.ball_sm;
+                    ball.position.X /= 2;
+                    ball.position.Y /= 2;
                 }
             }
         }       

@@ -1,57 +1,66 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace breakout
 {
-    class GameObject
+    public class GameObject
     {
-        public Texture2D Texture;
-        public Vector2 Position;
-        public Vector2 Velocity;
-        public Color RGB;
-        public int scorevalue;
-        public int sound;
-        public int editorid;
+        public Texture2D texture;
+        public Vector2 position;
+        public Vector2 velocity;
+        public Color color;
+        public short scorevalue;
+        public short sound;
+        public short editorid;
         public string editordesc;
-        // public bool collide;
+        // public bool collide; 
 
         public Rectangle BoundingBox
         {
             get
             {
-                return new Rectangle((int)Position.X, (int)Position.Y, Texture.Width, Texture.Height);
+                return new Rectangle((int)position.X, (int)position.Y, texture.Width, texture.Height);
             }
         }
-        public GameObject(Color rgb, Texture2D texture)
+        public GameObject(Color color, Texture2D texture)
         {
-            this.RGB = rgb;
-            this.Texture = texture;            
+            this.color = color;
+            this.texture = texture;            
         }
-        public GameObject(Color rgb, Texture2D texture,int editorid,string editordesc)
+        public GameObject(Color color, Texture2D texture,short editorid,string editordesc)
         {
-            this.RGB = rgb;
-            this.Texture = texture;
+            this.color = color;
+            this.texture = texture;
             this.editorid = editorid;
             this.editordesc = editordesc;
         }
-        public GameObject(Color rgb,Texture2D texture, Vector2 position)
-        {
-            this.RGB = rgb;
-            this.Texture = texture;
-            this.Position = position;
-        }
 
-        public GameObject(Color rgb,Texture2D texture, Vector2 position, Vector2 velocity)
+        public GameObject(Color color, Texture2D texture, short editorid, string editordesc,Vector2 position)
         {
-            this.RGB = rgb;
-            this.Texture = texture;
-            this.Position = position;
-            this.Velocity = velocity;
+            this.color = color;
+            this.texture = texture;
+            this.editorid = editorid;
+            this.editordesc = editordesc;
+            this.position = position;
+        }
+        public GameObject(Color color,Texture2D texture, Vector2 position)
+        {
+            this.color = color;
+            this.texture = texture;
+            this.position = position;
+        }
+        public GameObject(Color color,Texture2D texture, Vector2 position, Vector2 velocity)
+        {
+            this.color = color;
+            this.texture = texture;
+            this.position = position;
+            this.velocity = velocity;
         }
        
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Texture, Position, RGB);
-        }
+            spriteBatch.Draw(texture, position, color);
+        }       
     }
 }

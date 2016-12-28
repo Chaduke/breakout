@@ -6,7 +6,7 @@ using System;
 
 namespace breakout
 {
-    class GameContent
+    public class GameContent
     {
         public ContentManager manager;
 

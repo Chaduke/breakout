@@ -30,7 +30,7 @@ namespace breakout
                
         Level level;
         GameContent gamecontent;
-        Editor editor;
+        public Editor editor;
 
         Single fx_volume, fx_pitch, fx_pan;
 
@@ -216,59 +216,59 @@ namespace breakout
         {
             foreach (GameObject ball in level.balls)
             {
-                ball.Position.X += ball.Velocity.X;
-                ball.Position.Y += ball.Velocity.Y;
-                Single fx_pan = ((ball.Position.X * 2) / GraphicsDevice.Viewport.Width) - 1;
+                ball.position.X += ball.velocity.X;
+                ball.position.Y += ball.velocity.Y;
+                Single fx_pan = ((ball.position.X * 2) / GraphicsDevice.Viewport.Width) - 1;
                 if (fx_pan < -1.0f) fx_pan = -1.0f;
                 if (fx_pan > 1.0f) fx_pan = 1.0f;
 
-                if (ball.Position.X > GraphicsDevice.Viewport.Width - ball.Texture.Width)
+                if (ball.position.X > GraphicsDevice.Viewport.Width - ball.texture.Width)
                 {
                     // bounce off right wall                    
                     gamecontent.wallsound.Play(fx_volume,fx_pitch,fx_pan);
-                    ball.Velocity.X = -ball.Velocity.X;
-                    ball.Position.X = GraphicsDevice.Viewport.Width - ball.Texture.Width;
+                    ball.velocity.X = -ball.velocity.X;
+                    ball.position.X = GraphicsDevice.Viewport.Width - ball.texture.Width;
                 }
-                if (ball.Position.X < 0)
+                if (ball.position.X < 0)
                 {
                     // bounce off left wall
                     gamecontent.wallsound.Play(fx_volume, fx_pitch, fx_pan);
-                    ball.Velocity.X = -ball.Velocity.X;
-                    ball.Position.X = 0;
+                    ball.velocity.X = -ball.velocity.X;
+                    ball.position.X = 0;
                 }
-                if (ball.Position.Y > GraphicsDevice.Viewport.Height - ball.Texture.Height)
+                if (ball.position.Y > GraphicsDevice.Viewport.Height - ball.texture.Height)
                 {
                     // hit the floor
                     level.ballsremove.Add(ball);
                     continue;
                 }
-                if (ball.Position.Y < 0)
+                if (ball.position.Y < 0)
                 {
                     // bounce off top wall
                     gamecontent.wallsound.Play(fx_volume, fx_pitch, fx_pan);
-                    ball.Velocity.Y = -ball.Velocity.Y;
-                    ball.Position.Y = 0;
+                    ball.velocity.Y = -ball.velocity.Y;
+                    ball.position.Y = 0;
                 }
-                if ((ball.Position.Y + ball.Texture.Height > level.paddle.Position.Y) && (ball.Position.X + ball.Texture.Width > level.paddle.Position.X) && (ball.Position.X < level.paddle.Position.X + level.paddle.Texture.Width))
+                if ((ball.position.Y + ball.texture.Height > level.paddle.position.Y) && (ball.position.X + ball.texture.Width > level.paddle.position.X) && (ball.position.X < level.paddle.position.X + level.paddle.texture.Width))
                 {                    
                     gamecontent.paddlesound.Play(fx_volume, fx_pitch, fx_pan);
-                    ball.Position.Y = level.paddle.Position.Y - ball.Texture.Height;
-                    ball.Velocity.Y = -ball.Velocity.Y;
+                    ball.position.Y = level.paddle.position.Y - ball.texture.Height;
+                    ball.velocity.Y = -ball.velocity.Y;
 
                     // find center of ball and paddle
-                    int ballcenter = (int)(ball.Position.X) + (ball.Texture.Width / 2);
-                    int paddlecenter = (int)(level.paddle.Position.X) + (level.paddle.Texture.Width / 2);
+                    int ballcenter = (int)(ball.position.X) + (ball.texture.Width / 2);
+                    int paddlecenter = (int)(level.paddle.position.X) + (level.paddle.texture.Width / 2);
                     int paddleside = ballcenter - paddlecenter;
-                    ball.Velocity.X = paddleside / 2;                       
+                    ball.velocity.X = paddleside / 2;                       
 
                     // increase horizontal ball speed
-                    if (ball.Velocity.X < 0)
+                    if (ball.velocity.X < 0)
                     {
-                        ball.Velocity.X -= 0.2f;
+                        ball.velocity.X -= 0.2f;
                     }
                     else
                     {
-                        ball.Velocity.X += 0.2f;
+                        ball.velocity.X += 0.2f;
                     }
                 }
                 // ball collisions with blocks
@@ -278,15 +278,15 @@ namespace breakout
                     {
                         Debug.Print("Panning is {0}", fx_pan);
                         gamecontent.blocksound[block.sound].Play(fx_volume, fx_pitch, fx_pan);
-                        if (ball.Velocity.Y < 0)
+                        if (ball.velocity.Y < 0)
                         {                                
-                            ball.Velocity.Y -= 0.01f;
+                            ball.velocity.Y -= 0.01f;
                         }
                         else
                         {
-                            ball.Velocity.Y += 0.01f;
+                            ball.velocity.Y += 0.01f;
                         }
-                        ball.Velocity.Y = -ball.Velocity.Y;
+                        ball.velocity.Y = -ball.velocity.Y;
                         level.blocksremove.Add(block);
                         score += block.scorevalue;
                         break;
@@ -350,11 +350,11 @@ namespace breakout
             }
                         
             */
-            level.paddle.Position.X = currentMouseState.X;
+            level.paddle.position.X = currentMouseState.X;
             // paddle.Position.Y = currentMouseState.Y;
 
             // Make sure that the paddle does not go out of bounds
-            level.paddle.Position.X = MathHelper.Clamp(level.paddle.Position.X, 0, GraphicsDevice.Viewport.Width - level.paddle.Texture.Width);
+            level.paddle.position.X = MathHelper.Clamp(level.paddle.position.X, 0, GraphicsDevice.Viewport.Width - level.paddle.texture.Width);
             // paddle.Position.Y = MathHelper.Clamp(paddle.Position.Y, GraphicsDevice.Viewport.Height - (GraphicsDevice.Viewport.Height / 4), GraphicsDevice.Viewport.Height  - (paddle.Texture.Height * 2));
             
         }
