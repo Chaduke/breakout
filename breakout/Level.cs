@@ -9,6 +9,7 @@ namespace breakout
     {
         public int width;
         public int height;
+        public bool wide;
         public int number;
         public string name;
 
@@ -22,14 +23,15 @@ namespace breakout
         public List<GameObject> ballsremove;
         public Texture2D background;
 
-        private GameObject[] cursor;
+        public GameObject[] cursor;
 
-        public Level(int number,string name,int width,int height,GameContent gamecontent)
+        public Level(int number,string name,int width,int height,bool wide,GameContent gamecontent)
         {
             this.number = number;
             this.name = name;
             this.width = width;
             this.height = height;
+            this.wide = wide;
             this.gamecontent = gamecontent;
 
             paddle = new GameObject(Color.AliceBlue,gamecontent.paddle_sm,new Vector2(width/2,height-(gamecontent.paddle_sm.Height * 2)));
@@ -49,6 +51,11 @@ namespace breakout
             cursor[6] = new GameObject(Color.White, gamecontent.ball_sm, 6, "Ball White");
             background = gamecontent.background_sm;
         }
+
+        public void Test()
+        {
+
+        }
         public void Clear()
         {
             foreach(GameObject block in blocks)
@@ -60,36 +67,65 @@ namespace breakout
                 blocks.Remove(block);
             }
         }
+
+        public void Save()
+        {
+            string filepath = Directory.GetCurrentDirectory() + "\\Level" + number + ".lvl";
+            if (File.Exists(filepath)) File.Delete(filepath);
+
+            FileStream fs = File.Create(filepath);
+            BinaryWriter writer = new BinaryWriter(fs);
+            writer.Write("Test Level");
+            writer.Write(wide);
+            foreach (GameObject block in blocks)
+            {
+                writer.Write(block.editorid);
+                writer.Write(block.position.X);
+                writer.Write(block.position.Y);
+            }
+            fs.Close();
+        }
         public void Load()
         {
             string filepath = Directory.GetCurrentDirectory() + "\\Level" + number + ".lvl";
-            FileStream fs = File.OpenRead(filepath);
-            BinaryReader reader = new BinaryReader(fs);
+            FileStream fs; 
+            BinaryReader reader;
             short editorid;
             float x;
             float y;
 
             if (File.Exists(filepath))
             {
+                fs = File.OpenRead(filepath);
+                reader = new BinaryReader(fs);
                 Clear();
                 name = reader.ReadString();
+                wide = reader.ReadBoolean();
                 while (fs.Position < fs.Length)
                 {
+                    try
+                    {                    
                     editorid = reader.ReadInt16();
                     x = reader.ReadSingle();
                     y = reader.ReadSingle();
                     GameObject current = new GameObject(cursor[editorid].color, cursor[editorid].texture, editorid, cursor[editorid].editordesc, new Vector2(x, y));
                     blocks.Add(current);
+                    }
+                    catch
+                    {
+                        System.Diagnostics.Debug.Print("Cant read");
+                    }
                 }
+                fs.Close();
             }
-            fs.Close();
+            
         }        
 
         public void ChangeResolution(bool full)
         {
             if (full)
             {
-                background = gamecontent.background_lg;             
+                background = gamecontent.background_lg;
                 paddle.texture = gamecontent.paddle_lg;
                 paddle.position = new Vector2(width / 2, height - (gamecontent.paddle_lg.Height * 2));
             }

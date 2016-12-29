@@ -6,80 +6,62 @@ using System.IO;
 namespace breakout
 {
     public class Editor
-    {
-        private GameObject[] cursor;
+    {       
         private int cursorindex;
         private GameContent gamecontent;
         private SpriteBatch spritebatch;
-        private Viewport viewport;
+        public Viewport viewport;
         private MouseState currentmousestate;
         private MouseState previousmousestate;
         private Vector2 snapped;
         private Level level;
 
         private bool ongrid;
-        private bool overblock; 
+        private bool overblock;
+        private bool wide;
+        private byte button_hover;
 
         private GameObject selectedblock;
 
-        public Editor(GameContent gamecontent,SpriteBatch spritebatch,Viewport viewport)
+        public Editor(GameContent gamecontent,SpriteBatch spritebatch,Viewport viewport,bool wide)
         {
             this.gamecontent = gamecontent;
             this.spritebatch = spritebatch;
             this.viewport = viewport;
-
-            cursor = new GameObject[7];
-            cursor[0] = new GameObject(Color.Red,gamecontent.block_sm,0,"Block Red");
-            cursor[1] = new GameObject(Color.Orange, gamecontent.block_sm, 1, "Block Orange");
-            cursor[2] = new GameObject(Color.Yellow, gamecontent.block_sm, 2, "Block Yellow");
-            cursor[3] = new GameObject(Color.Green, gamecontent.block_sm, 3, "Block Green");
-            cursor[4] = new GameObject(Color.Blue, gamecontent.block_sm, 4, "Block Blue");
-            cursor[5] = new GameObject(Color.Purple, gamecontent.block_sm, 5, "Block Purple");
-            cursor[6] = new GameObject(Color.White, gamecontent.ball_sm, 6, "Ball White");
+            this.wide = wide;            
             cursorindex = 0;
-            level = new Level(0, "New Level", viewport.Width,viewport.Height, gamecontent);            
+            button_hover = 0;
+            level = new Level(0, "", viewport.Width,viewport.Height,wide,gamecontent);
+            level.Load();                      
         }
-        public void SaveLevel()
+        public void ReloadCursor(bool full)
         {
-            string filepath = Directory.GetCurrentDirectory() + "\\Level" + level.number + ".lvl";
-            if (File.Exists(filepath)) File.Delete(filepath);
-            
-            FileStream fs = File.Create(filepath);
-            BinaryWriter writer = new BinaryWriter(fs);
-            writer.Write("Test Level");
-            foreach (GameObject block in level.blocks)
+            for(int i=0;i<6;i++)
             {
-                writer.Write(block.editorid);                
-                writer.Write(block.position.X);
-                writer.Write(block.position.Y);
-            }                       
-            fs.Close();          
-        }
-        public void LoadLevel()
-        {
-            string filepath = Directory.GetCurrentDirectory() + "\\Level" + level.number + ".lvl";
-            FileStream fs = File.OpenRead(filepath);
-            BinaryReader reader = new BinaryReader(fs);
-            short editorid;
-            float x;
-            float y;
-
-            if (File.Exists(filepath))
-            {
-                level.Clear();
-                level.name = reader.ReadString();
-
-                while(fs.Position < fs.Length)
+                if (full)
                 {
-                    editorid = reader.ReadInt16();
-                    x = reader.ReadSingle();
-                    y = reader.ReadSingle();
-                    GameObject current = new GameObject(cursor[editorid].color, cursor[editorid].texture,editorid,cursor[editorid].editordesc, new Vector2(x, y));
-                    level.blocks.Add(current);
+                    level.cursor[i].texture = gamecontent.block_lg;
+                    foreach(GameObject block in level.blocks)
+                    {
+                        block.texture = gamecontent.block_lg;
+                        block.position.X *= 2;
+                        block.position.Y *= 2;
+                    }
                 }
-            }            
-            fs.Close();
+                else
+                {
+                    level.cursor[i].texture = gamecontent.block_sm;
+                    foreach (GameObject block in level.blocks)
+                    {
+                        block.texture = gamecontent.block_sm;
+                        block.position.X /= 2;
+                        block.position.Y /= 2;
+                    }
+                }
+            }
         }
+        
+                
         public void Update(MouseState mousestate)
         {
             int wheelchange;
@@ -95,11 +77,11 @@ namespace breakout
             }
 
             // if on grid, snap cursor to grid, otherwise draw a mouse pointer
-            if (currentmousestate.Position.Y < viewport.Height - (gamecontent.block_sm.Height * 8))
+            if (currentmousestate.Position.Y < viewport.Height - (level.cursor[0].texture.Height * 8))
             {
                 ongrid = true;
-                snapped.X = (int)(currentmousestate.Position.X / gamecontent.block_sm.Width) * gamecontent.block_sm.Width;
-                snapped.Y = 1 + (int)(currentmousestate.Position.Y / gamecontent.block_sm.Height) * gamecontent.block_sm.Height;
+                snapped.X = (int)(currentmousestate.Position.X / level.cursor[0].texture.Width) * level.cursor[0].texture.Width;
+                snapped.Y = 1 + (int)(currentmousestate.Position.Y / level.cursor[0].texture.Height) * level.cursor[0].texture.Height;
                 // check if block exists
                 foreach(GameObject block in level.blocks)
                 {
@@ -124,24 +106,61 @@ namespace breakout
                 }
                 else
                 {
-                    cursor[cursorindex].position = snapped;
+                    level.cursor[cursorindex].position = snapped;
                     if (currentmousestate.LeftButton == ButtonState.Pressed && previousmousestate.LeftButton == ButtonState.Released)
                     {
-                        level.blocks.Add(new GameObject(cursor[cursorindex].color, cursor[cursorindex].texture, cursor[cursorindex].editorid, cursor[cursorindex].editordesc,cursor[cursorindex].position));
+                        level.blocks.Add(new GameObject(level.cursor[cursorindex].color, level.cursor[cursorindex].texture, level.cursor[cursorindex].editorid, level.cursor[cursorindex].editordesc, level.cursor[cursorindex].position));
                     }
                 }
             }
             else
             {
+                // process bottom of screen
                 ongrid = false;
+                button_hover = 0;
+                // find load button
+                if(currentmousestate.Position.X > viewport.Width - (gamecontent.button_load.Width + 5) * 4 && currentmousestate.Position.X < viewport.Width - (gamecontent.button_load.Width + 5) * 3
+                    && currentmousestate.Position.Y > (viewport.Height - gamecontent.button_load.Height + 5) && currentmousestate.Position.Y < viewport.Height - 5)
+                {
+                    button_hover = 1;    
+                }
+                // find save button
+                if (currentmousestate.Position.X > viewport.Width - (gamecontent.button_load.Width + 5) * 3 && currentmousestate.Position.X < viewport.Width - (gamecontent.button_load.Width + 5) * 2
+                    && currentmousestate.Position.Y > (viewport.Height - gamecontent.button_load.Height + 5) && currentmousestate.Position.Y < viewport.Height - 5)
+                {
+                    button_hover = 2;
+                }
+                // find test button
+                if (currentmousestate.Position.X > viewport.Width - (gamecontent.button_load.Width + 5) * 2 && currentmousestate.Position.X < viewport.Width - (gamecontent.button_load.Width + 5) 
+                    && currentmousestate.Position.Y > (viewport.Height - gamecontent.button_load.Height + 5) && currentmousestate.Position.Y < viewport.Height - 5)
+                {
+                    button_hover = 3;
+                }
+                // find clear button
+                if (currentmousestate.Position.X > viewport.Width - (gamecontent.button_load.Width + 5) && currentmousestate.Position.X < viewport.Width - 5
+                    && currentmousestate.Position.Y > (viewport.Height - gamecontent.button_load.Height + 5) && currentmousestate.Position.Y < viewport.Height - 5)
+                {
+                    button_hover = 4;
+                }
+
                 if (currentmousestate.LeftButton == ButtonState.Pressed && previousmousestate.LeftButton == ButtonState.Released)
                 {
-                    SaveLevel();
-                }
-                if (currentmousestate.RightButton == ButtonState.Pressed && previousmousestate.RightButton == ButtonState.Released)
-                {
-                    LoadLevel();
-                }
+                    switch (button_hover)
+                    {
+                        case 1:
+                            level.Load();
+                            break;
+                        case 2:
+                            level.Save();
+                            break;
+                        case 3:
+                            break;
+                            level.Test();
+                        case 4:
+                            level.Clear();
+                            break;
+                    }                 
+                }               
             }
             // finish update
             previousmousestate = currentmousestate;
@@ -150,14 +169,24 @@ namespace breakout
         public void Draw()
         {            
             DrawGrid();
+            // draw Buttons
+            spritebatch.Draw(gamecontent.button_load, new Vector2(viewport.Width - ((gamecontent.button_load.Width + 5) * 4), viewport.Height - gamecontent.button_load.Height - 5), Color.White);
+            spritebatch.Draw(gamecontent.button_save, new Vector2(viewport.Width - ((gamecontent.button_load.Width + 5) * 3), viewport.Height - gamecontent.button_load.Height - 5), Color.White);
+            spritebatch.Draw(gamecontent.button_test, new Vector2(viewport.Width - ((gamecontent.button_load.Width + 5) * 2), viewport.Height - gamecontent.button_load.Height - 5), Color.White);
+            spritebatch.Draw(gamecontent.button_clear, new Vector2(viewport.Width - ((gamecontent.button_load.Width + 5)), viewport.Height - gamecontent.button_load.Height - 5), Color.White);
+            if (button_hover > 0)
+            {
+                spritebatch.Draw(gamecontent.button_outline, new Vector2(viewport.Width - ((gamecontent.button_load.Width + 5) * (5 - button_hover)), viewport.Height - gamecontent.button_load.Height - 5), Color.White);
+            }
+
             foreach (GameObject block in level.blocks)
             {
                 block.Draw(spritebatch);
             }
             if (ongrid && !overblock)
             {
-                GameContent.DrawText(cursor[cursorindex].editordesc, cursor[cursorindex].color, GameContent.textposition.BottomLeft, gamecontent.font_GoodDog, spritebatch, viewport);
-                cursor[cursorindex].Draw(spritebatch);
+                GameContent.DrawText(level.cursor[cursorindex].editordesc, level.cursor[cursorindex].color, GameContent.textposition.BottomLeft, gamecontent.font_GoodDog, spritebatch, viewport);
+                level.cursor[cursorindex].Draw(spritebatch);
             }
             else
             {
@@ -175,12 +204,12 @@ namespace breakout
         }
         private void DrawGrid()
         {
-            for (int x = 1; x < viewport.Width / gamecontent.block_sm.Width; x++)
+            for (int x = 1; x < viewport.Width / level.cursor[0].texture.Width; x++)
             {
-                for (int y = 1; y < (viewport.Height / gamecontent.block_sm.Height) - 7; y++)
+                for (int y = 1; y < (viewport.Height / level.cursor[0].texture.Height) - 7; y++)
                 {
-                    Line l1 = new Line(new Vector2(x * gamecontent.block_sm.Width, 0), new Vector2(x * gamecontent.block_sm.Width, viewport.Height - (gamecontent.block_sm.Height * 8)), 1, Color.Gray, gamecontent.pixel);
-                    Line l2 = new Line(new Vector2(0, y * gamecontent.block_sm.Height), new Vector2(viewport.Width,y * gamecontent.block_sm.Height), 1, Color.Gray, gamecontent.pixel);
+                    Line l1 = new Line(new Vector2(x * level.cursor[0].texture.Width, 0), new Vector2(x * level.cursor[0].texture.Width, viewport.Height - (level.cursor[0].texture.Height * 8)), 1, Color.Gray, gamecontent.pixel);
+                    Line l2 = new Line(new Vector2(0, y * level.cursor[0].texture.Height), new Vector2(viewport.Width,y * level.cursor[0].texture.Height), 1, Color.Gray, gamecontent.pixel);
                     l1.Update();
                     l1.Draw(spritebatch);
                     l2.Update();

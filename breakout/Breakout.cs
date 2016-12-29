@@ -34,7 +34,8 @@ namespace breakout
         }        
        
         gamestate currentstate;
-        GraphicsDeviceManager graphics;        
+        GraphicsDeviceManager graphics;
+        public bool widescreen;
         SpriteBatch spritebatch; 
                
         Level level;
@@ -65,12 +66,32 @@ namespace breakout
         }
         
         protected override void Initialize()
-        {            
-            graphics.PreferredBackBufferWidth = 960;
-            graphics.PreferredBackBufferHeight = 540;
+        {
+            int currentwidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+            
+            if (currentwidth == 1920)
+            {
+                widescreen = true;
+            }
+            else
+            {
+                widescreen = false;
+            }
+            // start in windowed mode
+            if (widescreen)
+            {
+                graphics.PreferredBackBufferWidth = 960;
+                graphics.PreferredBackBufferHeight = 540;
+            }
+            else
+            {
+                graphics.PreferredBackBufferWidth = 640;
+                graphics.PreferredBackBufferHeight = 512;
+            }           
             graphics.ApplyChanges();
+
             spritebatch = new SpriteBatch(GraphicsDevice);
-            gamecontent = new GameContent(Content.ServiceProvider);
+            gamecontent = new GameContent(Content.ServiceProvider,widescreen);
 
             r = new Random();
             
@@ -78,12 +99,12 @@ namespace breakout
             fx_pitch = 0.0f;
             fx_pan = 0.0f;
 
-            editor = new Editor(gamecontent,spritebatch,GraphicsDevice.Viewport);
+            editor = new Editor(gamecontent,spritebatch,GraphicsDevice.Viewport,widescreen);
             currentstate = gamestate.Editor;
 
             score = 0;
             ballsleft = 5;
-            level = new Level(0,"",GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height,gamecontent);
+            level = new Level(0,"",GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height,widescreen,gamecontent);
             level.Load();  
 
             base.Initialize();
@@ -131,25 +152,50 @@ namespace breakout
                 if (graphics.IsFullScreen)
                 {
                     //switch to windowed
-                    graphics.PreferredBackBufferWidth = 960;
-                    graphics.PreferredBackBufferHeight = 540;
-                    graphics.ApplyChanges();
-                    graphics.ToggleFullScreen();
-                    level.width = 960;
-                    level.height = 540;                   
+                    // 16:9 ratio 960:540
+                    // 4:3 ratio 640:512
+                    if (widescreen)
+                    {
+                        graphics.PreferredBackBufferWidth = 960;
+                        graphics.PreferredBackBufferHeight = 540;
+                        level.width = 960;
+                        level.height = 540;
+                    }
+                    else
+                    {
+                        graphics.PreferredBackBufferWidth = 640;
+                        graphics.PreferredBackBufferHeight = 512;
+                        level.width = 640;
+                        level.height = 512;
+                    }  
                     level.ChangeResolution(false);
+                    editor.ReloadCursor(false);
                 }
                 else
                 {
                     //switch to fullscreen
-                    graphics.PreferredBackBufferWidth = 1920;
-                    graphics.PreferredBackBufferHeight = 1080;
-                    graphics.ApplyChanges();                   
-                    graphics.ToggleFullScreen();
-                    level.width = 1920;
-                    level.height = 1080;
+                    // 16:9 ratio 1920:1080
+                    // 4:3 ratio 1280:1024
+                    if (widescreen)
+                    {
+                        graphics.PreferredBackBufferWidth = 1920;
+                        graphics.PreferredBackBufferHeight = 1080;
+                        level.width = 1920;
+                        level.height = 1080;
+                    }
+                    else
+                    {
+                        graphics.PreferredBackBufferWidth =  1280;
+                        graphics.PreferredBackBufferHeight = 1024;
+                        level.width = 1280;
+                        level.height = 1024;
+                    }
                     level.ChangeResolution(true);
+                    editor.ReloadCursor(true);
                 }
+                graphics.ApplyChanges();
+                graphics.ToggleFullScreen();
+                editor.viewport = GraphicsDevice.Viewport;                
             }
             // Switch to Main Menu
             if (currentKeyboardState.IsKeyDown(Keys.F1))

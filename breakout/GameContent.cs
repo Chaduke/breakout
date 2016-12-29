@@ -9,6 +9,7 @@ namespace breakout
     public class GameContent
     {
         public ContentManager manager;
+        bool widescreen;
 
         // fonts
         public SpriteFont font_arial;
@@ -31,10 +32,17 @@ namespace breakout
         public Texture2D pixel;
         public Texture2D pointer;
 
-        public GameContent(IServiceProvider provider)
+        public Texture2D button_load;
+        public Texture2D button_save;
+        public Texture2D button_test;
+        public Texture2D button_clear;
+        public Texture2D button_outline;
+
+        public GameContent(IServiceProvider provider,bool widescreen)
         {
             manager = new ContentManager(provider, "Content");
-            blocksound = new SoundEffect[6];           
+            blocksound = new SoundEffect[6];
+            this.widescreen = widescreen;
             LoadContent();
         }
         public enum textposition
@@ -59,16 +67,33 @@ namespace breakout
             blocksound[5] = manager.Load<SoundEffect>("Audio\\b6");            
 
             // Load Textures
-            background_sm = manager.Load<Texture2D>("Graphics\\background_sm");
-            background_lg = manager.Load<Texture2D>("Graphics\\background_lg");
-            paddle_sm = manager.Load<Texture2D>("Graphics\\paddle_sm");
-            paddle_lg = manager.Load<Texture2D>("Graphics\\paddle_lg");
+            if (widescreen)
+            {
+                background_sm = manager.Load<Texture2D>("Graphics\\background_sm");
+                background_lg = manager.Load<Texture2D>("Graphics\\background_lg");
+                paddle_sm = manager.Load<Texture2D>("Graphics\\paddle_sm");
+                paddle_lg = manager.Load<Texture2D>("Graphics\\paddle_lg");                
+                block_sm = manager.Load<Texture2D>("Graphics\\block_sm");
+                block_lg = manager.Load<Texture2D>("Graphics\\block_lg");
+            }
+            else
+            {
+                background_sm = manager.Load<Texture2D>("Graphics\\background_sm_43");
+                background_lg = manager.Load<Texture2D>("Graphics\\background_lg_43");
+                paddle_sm = manager.Load<Texture2D>("Graphics\\paddle_sm_43");
+                paddle_lg = manager.Load<Texture2D>("Graphics\\paddle_lg_43");                
+                block_sm = manager.Load<Texture2D>("Graphics\\block_sm_43");
+                block_lg = manager.Load<Texture2D>("Graphics\\block_lg_43");
+            }            
             ball_sm = manager.Load<Texture2D>("Graphics\\ball_sm");
-            ball_lg = manager.Load<Texture2D>("Graphics\\ball_lg");
-            block_sm = manager.Load<Texture2D>("Graphics\\block_sm");
-            block_lg = manager.Load<Texture2D>("Graphics\\block_lg");
+            ball_lg = manager.Load<Texture2D>("Graphics\\ball_lg");            
             pixel = manager.Load<Texture2D>("Graphics\\pixel");
             pointer = manager.Load<Texture2D>("Graphics\\pointer");
+            button_load = manager.Load<Texture2D>("Graphics\\load");
+            button_save = manager.Load<Texture2D>("Graphics\\save");
+            button_test = manager.Load<Texture2D>("Graphics\\test");
+            button_clear = manager.Load<Texture2D>("Graphics\\clear");
+            button_outline = manager.Load<Texture2D>("Graphics\\outline");
         }
 
         public static void DrawText(string msg, Color color,textposition position, SpriteFont font, SpriteBatch spritebatch, Viewport viewport)
