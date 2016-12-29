@@ -11,9 +11,18 @@ namespace breakout
 {
     /* TODO LIST
      
-     * level editor    
-     * embedded balls     
-     * sound and music     
+     * level editor - save, load and test buttons, level name input, ball placement (trapped balls)
+     * assign score and other properties to blocks
+     * powerup objects - extra balls, sticky paddle, shooting paddle
+     * moving blocks, different block sizes, rotation, animation
+     * gravity
+     * sound and music themes, get sounds on blocks working with load / save, get pan working
+     * sounds for different game events
+     * screen effects for game events
+     * write basic music for background on levels
+     * optional backgrounds for levels
+     * main menu - story mode, level editor, options
+     * game icon
     
     */
 
@@ -74,8 +83,8 @@ namespace breakout
 
             score = 0;
             ballsleft = 5;
-            level = new Level(1, "New Beginnings",GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height,gamecontent);
-            level.Create();  
+            level = new Level(0,"",GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height,gamecontent);
+            level.Load();  
 
             base.Initialize();
         }
@@ -116,7 +125,7 @@ namespace breakout
             // Get keyboard input
 
             // fullscreen toggle
-            if (currentKeyboardState.IsKeyDown(Keys.RightAlt) && currentKeyboardState.IsKeyDown(Keys.Enter))
+            if (currentKeyboardState.IsKeyDown(Keys.RightAlt) && currentKeyboardState.IsKeyDown(Keys.Enter) && previousKeyboardState.IsKeyUp(Keys.Enter))
             {
                 //check the current screen mode
                 if (graphics.IsFullScreen)
@@ -125,8 +134,10 @@ namespace breakout
                     graphics.PreferredBackBufferWidth = 960;
                     graphics.PreferredBackBufferHeight = 540;
                     graphics.ApplyChanges();
-                    graphics.ToggleFullScreen();                    
-                    level.Reload(false);
+                    graphics.ToggleFullScreen();
+                    level.width = 960;
+                    level.height = 540;                   
+                    level.ChangeResolution(false);
                 }
                 else
                 {
@@ -134,8 +145,10 @@ namespace breakout
                     graphics.PreferredBackBufferWidth = 1920;
                     graphics.PreferredBackBufferHeight = 1080;
                     graphics.ApplyChanges();                   
-                    graphics.ToggleFullScreen();                    
-                    level.Reload(true);
+                    graphics.ToggleFullScreen();
+                    level.width = 1920;
+                    level.height = 1080;
+                    level.ChangeResolution(true);
                 }
             }
             // Switch to Main Menu
@@ -144,12 +157,12 @@ namespace breakout
                 currentstate = gamestate.MainMenu;
             }
             // Switch to Level Editor
-            if (currentKeyboardState.IsKeyDown(Keys.F2))
+            if (currentKeyboardState.IsKeyDown(Keys.F2) && previousKeyboardState.IsKeyUp(Keys.F2))
             {
                 currentstate = gamestate.Editor;
             }
             // Switch to Game
-            if (currentKeyboardState.IsKeyDown(Keys.F3))
+            if (currentKeyboardState.IsKeyDown(Keys.F3) && previousKeyboardState.IsKeyUp(Keys.F3))
             {
                 currentstate = gamestate.WaitingBall;
             }            
@@ -204,7 +217,7 @@ namespace breakout
                     {
                         level.blocks.Remove(block);
                     }
-                    level.Create();
+                    level.Load();
                 }
 
             }
@@ -299,7 +312,7 @@ namespace breakout
                 if (level.blocks.Count == 0)
                 {
                     // advance level
-                    level.Create();
+                    level.Load();
                 }
             }  
 
@@ -367,7 +380,7 @@ namespace breakout
             // GraphicsDevice.Clear(Color.Black);          
             
             spritebatch.Begin();
-            spritebatch.Draw(gamecontent.background_sm, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+            spritebatch.Draw(level.background, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 
             switch (currentstate)
             {

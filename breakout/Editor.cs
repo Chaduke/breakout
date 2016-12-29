@@ -46,7 +46,7 @@ namespace breakout
             
             FileStream fs = File.Create(filepath);
             BinaryWriter writer = new BinaryWriter(fs);
-
+            writer.Write("Test Level");
             foreach (GameObject block in level.blocks)
             {
                 writer.Write(block.editorid);                
@@ -67,6 +67,8 @@ namespace breakout
             if (File.Exists(filepath))
             {
                 level.Clear();
+                level.name = reader.ReadString();
+
                 while(fs.Position < fs.Length)
                 {
                     editorid = reader.ReadInt16();
