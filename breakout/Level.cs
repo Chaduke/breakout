@@ -26,8 +26,6 @@ namespace breakout
 
         public GameObject[] cursor;
 
-        public bool loadmain;
-
         public Level(int number,string name,int width,int height,bool wide,bool full,GameContent gamecontent)
         {
             this.number = number;
@@ -36,8 +34,7 @@ namespace breakout
             this.height = height;
             this.wide = wide;
             this.full = full;
-            this.gamecontent = gamecontent;
-            loadmain = false;
+            this.gamecontent = gamecontent;           
 
             paddle = new GameObject(Color.AliceBlue,gamecontent.paddle_sm,new Vector2(width/2,height-(gamecontent.paddle_sm.Height * 2)));
             
@@ -53,15 +50,21 @@ namespace breakout
             cursor[3] = new GameObject(Color.Green, gamecontent.block_sm, 3, "Block Green");
             cursor[4] = new GameObject(Color.Blue, gamecontent.block_sm, 4, "Block Blue");
             cursor[5] = new GameObject(Color.Purple, gamecontent.block_sm, 5, "Block Purple");
-            cursor[6] = new GameObject(Color.White, gamecontent.ball_sm, 6, "Ball White");
+            cursor[6] = new GameObject(Color.Yellow, gamecontent.ball_sm, 6, "Ball Yellow");
             background = gamecontent.background_sm;
-        }
+        }            
 
-        public void Test()
+        public void Draw(SpriteBatch spritebatch)
         {
-            loadmain = true;
+            foreach (GameObject block in blocks)
+            {
+                block.Draw(spritebatch);
+            }
+            foreach (GameObject ball in balls)
+            {
+                ball.Draw(spritebatch);
+            }
         }
-
         public void ClearBlocks()
         {
             foreach(GameObject block in blocks)
@@ -88,6 +91,7 @@ namespace breakout
 
         public void Save()
         {
+            System.Diagnostics.Debug.Print("Starting save..fullscreen is " + full);
             string filepath = Directory.GetCurrentDirectory() + "\\Level" + number + ".lvl";
             if (File.Exists(filepath)) File.Delete(filepath);
 
@@ -96,11 +100,18 @@ namespace breakout
             writer.Write("Test Level");
             writer.Write(wide);
             writer.Write(full);
+            System.Diagnostics.Debug.Print("Saved level fullscreen " + full);
             foreach (GameObject block in blocks)
             {
                 writer.Write(block.editorid);
                 writer.Write(block.position.X);
                 writer.Write(block.position.Y);
+            }
+            foreach (GameObject ball in balls)
+            {
+                writer.Write(ball.editorid);
+                writer.Write(ball.position.X);
+                writer.Write(ball.position.Y);
             }
             fs.Close();
         }
@@ -125,7 +136,7 @@ namespace breakout
                 name = reader.ReadString();
                 wide = reader.ReadBoolean();
                 fulltemp = reader.ReadBoolean();
-
+                System.Diagnostics.Debug.Print ("Loaded level " + name + " fullscreen is " + fulltemp);
                 if (fulltemp==true && full==false)
                 {
                     shrink = true;
@@ -137,37 +148,55 @@ namespace breakout
 
                 while (fs.Position < fs.Length)
                 {
-                    try
-                    {                    
-                    editorid = reader.ReadInt16();
-                    x = reader.ReadSingle();
-                    y = reader.ReadSingle();
+                        
+                        editorid = reader.ReadInt16();
+                        x = reader.ReadSingle();
+                        y = reader.ReadSingle();
 
-                    if (enlarge)
-                    {
-                        x *= 2;
-                        y *= 2;
-                    }
-                    if (shrink)
-                    {
-                        x /= 2;
-                        y /= 2;
-                    }
-                    GameObject current = new GameObject(cursor[editorid].color, cursor[editorid].texture, editorid, cursor[editorid].editordesc, new Vector2(x, y));
-                    blocks.Add(current);
-                    }
-                    catch
-                    {
-                        System.Diagnostics.Debug.Print("Cant read file.");
-                    }
+                        if (enlarge)
+                        {
+                            x *= 2;
+                            y *= 2;
+                        }
+                        if (shrink)
+                        {
+                            x /= 2;
+                            y /= 2;
+                        }
+                        GameObject current = new GameObject(cursor[editorid].color, cursor[editorid].texture, editorid, cursor[editorid].editordesc, new Vector2(x, y));
+                        if (current.editorid == 6)
+                        {
+                            current.velocity.X = 2;
+                            current.velocity.Y = 2;
+                            balls.Add(current);
+                        }
+                        else
+                        {
+                            blocks.Add(current);
+                        } 
                 }
                 fs.Close();
-            }
-            
+            }            
         }        
 
-        public void ChangeResolution(bool full)
+        public void ChangeResolution(bool newfull,int w,int h)
         {
+            full = newfull;
+            width = w;
+            height = h;
+            System.Diagnostics.Debug.Print ("Resolution Changed to fullscreen = " + full);
+            for (int i = 0; i < 6; i++)
+            {
+                if (full)
+                {
+                    cursor[i].texture = gamecontent.block_lg;
+
+                }
+                else
+                {
+                    cursor[i].texture = gamecontent.block_sm;
+                }
+            }
             if (full)
             {
                 background = gamecontent.background_lg;
@@ -241,7 +270,6 @@ namespace breakout
                     blocks.Add(block);
                 }
             }
-
             // setup second row set
             for (short row = 0; row < 3; row++)
             {
