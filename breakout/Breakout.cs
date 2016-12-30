@@ -11,7 +11,7 @@ namespace breakout
 {
     /* TODO LIST
      
-     * level editor - save, load and test buttons, level name input, ball placement (trapped balls)
+     * level editor - level name input, ball placement (trapped balls)
      * assign score and other properties to blocks
      * powerup objects - extra balls, sticky paddle, shooting paddle
      * moving blocks, different block sizes, rotation, animation
@@ -35,10 +35,11 @@ namespace breakout
        
         gamestate currentstate;
         GraphicsDeviceManager graphics;
-        public bool widescreen;
+        public bool wide;
+        public bool full;
         SpriteBatch spritebatch; 
                
-        Level level;
+        public Level level;
         GameContent gamecontent;
         public Editor editor;
 
@@ -71,14 +72,15 @@ namespace breakout
             
             if (currentwidth == 1920)
             {
-                widescreen = true;
+                wide = true;
             }
             else
             {
-                widescreen = false;
+                wide = false;
             }
             // start in windowed mode
-            if (widescreen)
+            full = false;
+            if (wide)
             {
                 graphics.PreferredBackBufferWidth = 960;
                 graphics.PreferredBackBufferHeight = 540;
@@ -91,7 +93,7 @@ namespace breakout
             graphics.ApplyChanges();
 
             spritebatch = new SpriteBatch(GraphicsDevice);
-            gamecontent = new GameContent(Content.ServiceProvider,widescreen);
+            gamecontent = new GameContent(Content.ServiceProvider,wide);
 
             r = new Random();
             
@@ -99,12 +101,12 @@ namespace breakout
             fx_pitch = 0.0f;
             fx_pan = 0.0f;
 
-            editor = new Editor(gamecontent,spritebatch,GraphicsDevice.Viewport,widescreen);
+            editor = new Editor(gamecontent,spritebatch,GraphicsDevice.Viewport,wide,full);
             currentstate = gamestate.Editor;
 
             score = 0;
             ballsleft = 5;
-            level = new Level(0,"",GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height,widescreen,gamecontent);
+            level = new Level(0,"",GraphicsDevice.Viewport.Width,GraphicsDevice.Viewport.Height,wide,full,gamecontent);
             level.Load();  
 
             base.Initialize();
@@ -131,6 +133,14 @@ namespace breakout
                     break;
                 case gamestate.Editor:
                     editor.Update(currentMouseState);
+                    if (editor.level.loadmain)
+                    {
+                        level = editor.level;
+                        editor.level.loadmain = false;
+                        currentstate = gamestate.WaitingBall;
+                        previousMouseState = currentMouseState;
+                        level.ClearBalls();
+                    }
                     break;
                 case gamestate.WaitingBall:
                     UpdatePaddle(gameTime);
@@ -151,10 +161,12 @@ namespace breakout
                 //check the current screen mode
                 if (graphics.IsFullScreen)
                 {
+
                     //switch to windowed
                     // 16:9 ratio 960:540
                     // 4:3 ratio 640:512
-                    if (widescreen)
+                    full = false;
+                    if (wide)
                     {
                         graphics.PreferredBackBufferWidth = 960;
                         graphics.PreferredBackBufferHeight = 540;
@@ -167,16 +179,15 @@ namespace breakout
                         graphics.PreferredBackBufferHeight = 512;
                         level.width = 640;
                         level.height = 512;
-                    }  
-                    level.ChangeResolution(false);
-                    editor.ReloadCursor(false);
+                    }                      
                 }
                 else
                 {
                     //switch to fullscreen
                     // 16:9 ratio 1920:1080
                     // 4:3 ratio 1280:1024
-                    if (widescreen)
+                    full = true;
+                    if (wide)
                     {
                         graphics.PreferredBackBufferWidth = 1920;
                         graphics.PreferredBackBufferHeight = 1080;
@@ -189,16 +200,16 @@ namespace breakout
                         graphics.PreferredBackBufferHeight = 1024;
                         level.width = 1280;
                         level.height = 1024;
-                    }
-                    level.ChangeResolution(true);
-                    editor.ReloadCursor(true);
+                    }                   
                 }
+                level.ChangeResolution(full);
+                editor.ChangeResolution(full);
                 graphics.ApplyChanges();
                 graphics.ToggleFullScreen();
                 editor.viewport = GraphicsDevice.Viewport;                
             }
             // Switch to Main Menu
-            if (currentKeyboardState.IsKeyDown(Keys.F1))
+            if (currentKeyboardState.IsKeyDown(Keys.F1) && previousKeyboardState.IsKeyUp(Keys.F1))
             {
                 currentstate = gamestate.MainMenu;
             }
@@ -222,7 +233,7 @@ namespace breakout
             // if (currentMouseState.Y > GraphicsDevice.Viewport.Height) Mouse.SetPosition(currentMouseState.X, GraphicsDevice.Viewport.Height);
 
             // add ball on click
-            if (currentMouseState.LeftButton == ButtonState.Pressed)
+            if (currentMouseState.LeftButton == ButtonState.Pressed && previousMouseState.LeftButton == ButtonState.Released)
             {
                 if (currentstate == gamestate.WaitingBall)
                 {
@@ -277,7 +288,7 @@ namespace breakout
             {
                 ball.position.X += ball.velocity.X;
                 ball.position.Y += ball.velocity.Y;
-                Single fx_pan = ((ball.position.X * 2) / GraphicsDevice.Viewport.Width) - 1;
+                fx_pan = ((ball.position.X * 2) / GraphicsDevice.Viewport.Width) - 1;
                 if (fx_pan < -1.0f) fx_pan = -1.0f;
                 if (fx_pan > 1.0f) fx_pan = 1.0f;
 
@@ -335,7 +346,7 @@ namespace breakout
                 {
                     if (ball.BoundingBox.Intersects(block.BoundingBox))
                     {
-                        Debug.Print("Panning is {0}", fx_pan);
+                        // Debug.Print("Panning is {0}", fx_pan);
                         gamecontent.blocksound[block.sound].Play(fx_volume, fx_pitch, fx_pan);
                         if (ball.velocity.Y < 0)
                         {                                
@@ -372,7 +383,7 @@ namespace breakout
                 {
                     ballsleft--;
                     currentstate = gamestate.WaitingBall;
-                    if (ballsleft ==0)
+                    if (ballsleft==0)
                     {
                         currentstate = gamestate.GameOver;
                     }

@@ -11,56 +11,66 @@ namespace breakout
         private GameContent gamecontent;
         private SpriteBatch spritebatch;
         public Viewport viewport;
+        private bool wide;
+        private bool full;
         private MouseState currentmousestate;
         private MouseState previousmousestate;
         private Vector2 snapped;
-        private Level level;
+        public Level level;
 
         private bool ongrid;
         private bool overblock;
-        private bool wide;
+        
         private byte button_hover;
 
         private GameObject selectedblock;
 
-        public Editor(GameContent gamecontent,SpriteBatch spritebatch,Viewport viewport,bool wide)
+        public Editor(GameContent gamecontent,SpriteBatch spritebatch,Viewport viewport,bool wide,bool full)
         {
             this.gamecontent = gamecontent;
             this.spritebatch = spritebatch;
             this.viewport = viewport;
-            this.wide = wide;            
+            this.wide = wide;
+            this.full = full;
             cursorindex = 0;
             button_hover = 0;
-            level = new Level(0, "", viewport.Width,viewport.Height,wide,gamecontent);
+            level = new Level(0, "", viewport.Width,viewport.Height,wide,full,gamecontent);
             level.Load();                      
         }
-        public void ReloadCursor(bool full)
+        public void ChangeResolution(bool full)
         {
             for(int i=0;i<6;i++)
             {
                 if (full)
                 {
                     level.cursor[i].texture = gamecontent.block_lg;
-                    foreach(GameObject block in level.blocks)
-                    {
-                        block.texture = gamecontent.block_lg;
-                        block.position.X *= 2;
-                        block.position.Y *= 2;
-                    }
+                    
                 }
                 else
                 {
                     level.cursor[i].texture = gamecontent.block_sm;
-                    foreach (GameObject block in level.blocks)
-                    {
-                        block.texture = gamecontent.block_sm;
-                        block.position.X /= 2;
-                        block.position.Y /= 2;
-                    }
+                    
                 }
             }
+            if (full)
+            {
+                foreach (GameObject block in level.blocks)
+                {
+                    block.texture = gamecontent.block_lg;
+                    block.position.X *= 2;
+                    block.position.Y *= 2;
+                }
+            }
+            else
+            {
+                foreach (GameObject block in level.blocks)
+                {
+                    block.texture = gamecontent.block_sm;
+                    block.position.X /= 2;
+                    block.position.Y /= 2;
+                }
+            }            
         }
-        
                 
         public void Update(MouseState mousestate)
         {
@@ -153,11 +163,11 @@ namespace breakout
                         case 2:
                             level.Save();
                             break;
-                        case 3:
-                            break;
+                        case 3:                            
                             level.Test();
+                            break;
                         case 4:
-                            level.Clear();
+                            level.ClearBlocks();
                             break;
                     }                 
                 }               
@@ -183,6 +193,7 @@ namespace breakout
             {
                 block.Draw(spritebatch);
             }
+
             if (ongrid && !overblock)
             {
                 GameContent.DrawText(level.cursor[cursorindex].editordesc, level.cursor[cursorindex].color, GameContent.textposition.BottomLeft, gamecontent.font_GoodDog, spritebatch, viewport);

@@ -10,6 +10,7 @@ namespace breakout
         public int width;
         public int height;
         public bool wide;
+        public bool full;
         public int number;
         public string name;
 
@@ -25,14 +26,18 @@ namespace breakout
 
         public GameObject[] cursor;
 
-        public Level(int number,string name,int width,int height,bool wide,GameContent gamecontent)
+        public bool loadmain;
+
+        public Level(int number,string name,int width,int height,bool wide,bool full,GameContent gamecontent)
         {
             this.number = number;
             this.name = name;
             this.width = width;
             this.height = height;
             this.wide = wide;
+            this.full = full;
             this.gamecontent = gamecontent;
+            loadmain = false;
 
             paddle = new GameObject(Color.AliceBlue,gamecontent.paddle_sm,new Vector2(width/2,height-(gamecontent.paddle_sm.Height * 2)));
             
@@ -54,9 +59,10 @@ namespace breakout
 
         public void Test()
         {
-
+            loadmain = true;
         }
-        public void Clear()
+
+        public void ClearBlocks()
         {
             foreach(GameObject block in blocks)
             {
@@ -65,6 +71,18 @@ namespace breakout
             foreach(GameObject block in blocksremove)
             {
                 blocks.Remove(block);
+            }
+        }
+
+        public void ClearBalls()
+        {
+            foreach (GameObject ball in balls)
+            {
+                ballsremove.Add(ball);
+            }
+            foreach (GameObject ball in ballsremove)
+            {
+                balls.Remove(ball);
             }
         }
 
@@ -77,6 +95,7 @@ namespace breakout
             BinaryWriter writer = new BinaryWriter(fs);
             writer.Write("Test Level");
             writer.Write(wide);
+            writer.Write(full);
             foreach (GameObject block in blocks)
             {
                 writer.Write(block.editorid);
@@ -93,14 +112,29 @@ namespace breakout
             short editorid;
             float x;
             float y;
+            bool fulltemp;
+            bool enlarge = false;
+            bool shrink = false;
 
             if (File.Exists(filepath))
             {
                 fs = File.OpenRead(filepath);
                 reader = new BinaryReader(fs);
-                Clear();
+                ClearBlocks();
+                ClearBalls();
                 name = reader.ReadString();
                 wide = reader.ReadBoolean();
+                fulltemp = reader.ReadBoolean();
+
+                if (fulltemp==true && full==false)
+                {
+                    shrink = true;
+                }
+                if (fulltemp == false && full == true)
+                {
+                    enlarge = true;
+                }
+
                 while (fs.Position < fs.Length)
                 {
                     try
@@ -108,12 +142,23 @@ namespace breakout
                     editorid = reader.ReadInt16();
                     x = reader.ReadSingle();
                     y = reader.ReadSingle();
+
+                    if (enlarge)
+                    {
+                        x *= 2;
+                        y *= 2;
+                    }
+                    if (shrink)
+                    {
+                        x /= 2;
+                        y /= 2;
+                    }
                     GameObject current = new GameObject(cursor[editorid].color, cursor[editorid].texture, editorid, cursor[editorid].editordesc, new Vector2(x, y));
                     blocks.Add(current);
                     }
                     catch
                     {
-                        System.Diagnostics.Debug.Print("Cant read");
+                        System.Diagnostics.Debug.Print("Cant read file.");
                     }
                 }
                 fs.Close();
