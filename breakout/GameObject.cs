@@ -24,16 +24,17 @@ namespace breakout
                 return new Rectangle((int)position.X, (int)position.Y, texture.Width, texture.Height);
             }
         }        
-        public GameObject(Color color, Texture2D texture,short editorid,string editordesc)
+        public GameObject(Color color, Texture2D texture,short editorid,string editordesc,short sound)
         {
             this.color = color;
             this.texture = texture;
             this.editorid = editorid;
             this.editordesc = editordesc;
+            this.sound = sound;
             this.collide = false;
         }
 
-        public GameObject(Color color, Texture2D texture, short editorid, string editordesc,Vector2 position)
+        public GameObject(Color color, Texture2D texture, short editorid, string editordesc,Vector2 position,short sound)
         {
             this.color = color;
             this.texture = texture;
@@ -41,6 +42,7 @@ namespace breakout
             this.editordesc = editordesc;
             this.position = position;
             this.collide = false;
+            this.sound = sound;
         }
         public GameObject(Color color,Texture2D texture, Vector2 position)
         {

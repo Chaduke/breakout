@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
 using System;
+using Microsoft.Xna.Framework.Media;
 
 namespace breakout
 {
@@ -19,6 +20,7 @@ namespace breakout
         public SoundEffect paddlesound;
         public SoundEffect[] blocksound;
         public SoundEffect wallsound;
+        public Song music;        
 
         // textures
         public Texture2D background_sm;
@@ -57,14 +59,15 @@ namespace breakout
             font_GoodDog = manager.Load<SpriteFont>("Fonts\\GoodDog");
 
             // load sounds
-            paddlesound = manager.Load<SoundEffect>("Audio\\c6");
-            wallsound = manager.Load<SoundEffect>("Audio\\c7");
+            paddlesound = manager.Load<SoundEffect>("Audio\\c7");
+            wallsound = manager.Load<SoundEffect>("Audio\\c6");
             blocksound[0] = manager.Load<SoundEffect>("Audio\\d7");
             blocksound[1] = manager.Load<SoundEffect>("Audio\\e7");
             blocksound[2] = manager.Load<SoundEffect>("Audio\\f7");
             blocksound[3] = manager.Load<SoundEffect>("Audio\\g7");
             blocksound[4] = manager.Load<SoundEffect>("Audio\\a6");
-            blocksound[5] = manager.Load<SoundEffect>("Audio\\b6");            
+            blocksound[5] = manager.Load<SoundEffect>("Audio\\b6");
+            music = manager.Load<Song>("Audio\\piano_jazz");
 
             // Load Textures
             if (widescreen)

@@ -181,3 +181,9 @@
 /processorParam:TextureFormat=Compressed
 /build:Fonts\GoodDog.spritefont
 
+#begin Audio/piano_jazz.wav
+/importer:WavImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Audio/piano_jazz.wav
+

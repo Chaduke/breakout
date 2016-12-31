@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Xna.Framework.Media;
 
 namespace breakout
 {
@@ -40,6 +41,8 @@ namespace breakout
         public int vwidth;
         public int vheight;
 
+        public const bool complex_collisions = false;
+
         SpriteBatch spritebatch; 
                
         public Level level;
@@ -63,7 +66,8 @@ namespace breakout
         Random r;
         int score;
         int ballsleft;
-              
+        int ballcount;
+        GameObject newball;      
         public Breakout()
         {
             graphics = new GraphicsDeviceManager(this);            
@@ -104,18 +108,22 @@ namespace breakout
 
             r = new Random();
             
-            fx_volume = 0.2f;
-            fx_pitch = 0.0f;
+            fx_volume = 0.0f;
+            fx_pitch = -1.0f;
             fx_pan = 0.0f;
 
             editor = new Editor(gamecontent,spritebatch,vwidth,vheight,wide,full);
-            currentstate = gamestate.Editor;
+            currentstate = gamestate.WaitingBall;
 
             score = 0;
             ballsleft = 5;
             level = new Level(0,"Game Level",vwidth,vheight,wide,full,gamecontent);
-            level.Load();  
+            level.Load();
 
+            MediaPlayer.Play(gamecontent.music);
+            MediaPlayer.IsRepeating = true;
+            MediaPlayer.Volume = fx_volume;
+           
             base.Initialize();
         }
         
@@ -241,15 +249,17 @@ namespace breakout
                 {
                     if (graphics.IsFullScreen)
                     {
-                        level.balls.Add(new GameObject(Color.Yellow, gamecontent.ball_lg,
-                            new Vector2(r.Next(0, vwidth), 100), new Vector2(r.Next(-7, 7), r.Next(5, 7))));
+                        newball = new GameObject(Color.Yellow, gamecontent.ball_lg,
+                            new Vector2(r.Next(0, vwidth), vheight - gamecontent.ball_lg.Height * 5), new Vector2(r.Next(-7, 7), r.Next(-15, -10)));
                     }
                     else
                     {
-                        level.balls.Add(new GameObject(Color.Yellow, gamecontent.ball_sm,
-                            new Vector2(r.Next(0, vwidth), 100), new Vector2(r.Next(-7, 7), r.Next(5, 7))));
-                    }
+                       newball = new GameObject(Color.Yellow, gamecontent.ball_sm,
+                            new Vector2(r.Next(0, vwidth), vheight - gamecontent.ball_sm.Height * 5), new Vector2(r.Next(-7, 7), r.Next(-5, -3)));
                         
+                    }
+                    newball.collide = true;
+                    level.balls.Add(newball);
                     currentstate = gamestate.BallLaunched;
                 }
 
@@ -304,12 +314,6 @@ namespace breakout
                     ball.collision_point = ball.position;
                     ball.collide = true;
                 }
-                if (ball.position.Y > vheight - ball.texture.Height)
-                {
-                    // lost ball
-                    level.ballsremove.Add(ball);
-                    continue;
-                }
                 if (ball.position.Y < 0)
                 {
                     // bounce off top wall
@@ -319,8 +323,18 @@ namespace breakout
                     ball.collision_point = ball.position;
                     ball.collide = true;
                 }
-                // collision with paddle
-                if ((ball.position.Y + ball.texture.Height > level.paddle.position.Y) && (ball.position.X + ball.texture.Width > level.paddle.position.X) && (ball.position.X < level.paddle.position.X + level.paddle.texture.Width))
+                if (ball.position.Y > vheight - ball.texture.Height)
+                {
+                    // lost ball
+                    level.ballsremove.Add(ball);
+                    continue;
+                }
+                ////////////////////////////////
+                // ball collision with paddle //
+                ////////////////////////////////
+                if ((ball.position.Y + ball.texture.Height > level.paddle.position.Y) && 
+                    (ball.position.X + ball.texture.Width > level.paddle.position.X) && 
+                    (ball.position.X < level.paddle.position.X + level.paddle.texture.Width))
                 {                    
                     gamecontent.paddlesound.Play(fx_volume, fx_pitch, fx_pan);
                     ball.position.Y = level.paddle.position.Y - ball.texture.Height;
@@ -344,45 +358,75 @@ namespace breakout
                     }
                     ball.collide = true;
                 }
-
-                // ball collisions with blocks
+                /////////////////////////////////
+                // ball collisions with blocks //
+                /////////////////////////////////
                 foreach (GameObject block in level.blocks)
                 {
                     if (ball.BoundingBox.Intersects(block.BoundingBox))
                     {
-                        // Debug.Print("Panning is {0}", fx_pan);
-                        // ball must travel a certain distance before colliding again with a block, or be trapped
-                        float cd = (Vector2.Distance(ball.collision_point, ball.position));
-                        if (cd > 50.0f || !ball.collide)
+                        // find where ball collided with block
+                        ball_left = ball.position.X;
+                        ball_right = ball.position.X + ball.texture.Width;
+                        ball_top = ball.position.Y;
+                        ball_bottom = ball.position.Y + ball.texture.Height;
+
+                        block_left = block.position.X;
+                        block_right = block.position.X + block.texture.Width;
+                        block_top = block.position.Y;
+                        block_bottom = block.position.Y + block.texture.Height;
+
+                        o_left = ball_right - block_left;
+                        o_right = block_right - ball_left;
+                        o_top = ball_bottom - block_top;
+                        o_bottom = block_bottom - ball_top;                        
+
+                        if (!ball.collide)
                         {
-                            // Debug.Print("Distance from last collision {0}", cd);                           
-                           
-                            // track collision point
-                            ball.collision_point = ball.position;
-
-                            // find where ball collided with block
-                            ball_left = ball.position.X;
-                            ball_right = ball.position.X + ball.texture.Width;
-                            ball_top = ball.position.Y;
-                            ball_bottom = ball.position.Y + ball.texture.Height;
-
-                            block_left = block.position.X;
-                            block_right = block.position.X + block.texture.Width;
-                            block_top = block.position.Y;
-                            block_bottom = block.position.Y + block.texture.Height;
-
-                            o_left = ball_right - block_left;
-                            o_right = block_right - ball_left;
-                            o_top = ball_bottom - block_top;
-                            o_bottom = block_bottom - ball_top;
-
-                            if (o_left < ball.texture.Width && ball.velocity.X > 0) ball.velocity.X *= -1;
-                            if (o_right < ball.texture.Width && ball.velocity.X < 0) ball.velocity.X *= -1;
-                            if (o_top < ball.texture.Height && ball.velocity.Y > 0) ball.velocity.Y *= -1;
-                            if (o_bottom < ball.texture.Height && ball.velocity.Y < 0) ball.velocity.Y *= -1;
-
-                            if (ball.collide)
+                            // do basic collisions
+                            switch (FindSmallest(o_top, o_bottom, o_left, o_right))
                             {
+                                case "top":
+                                    ball.velocity.Y *= -1;
+                                    ball.position.Y = block_top - ball.texture.Height - 1;
+                                    break;
+                                case "bottom":
+                                    ball.velocity.Y *= -1;
+                                    ball.position.Y = block_bottom + 1;
+                                    break;
+                                case "left":
+                                    ball.velocity.X *= -1;
+                                    ball.position.X = block_left - ball.texture.Width - 1;
+                                    break;
+                                case "right":
+                                    ball.velocity.X *= -1;
+                                    ball.position.X = block_right + 1;
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            // ball must travel a certain distance before colliding again with a block
+                            float cd = (Vector2.Distance(ball.collision_point, ball.position));
+                            if (cd > 50.0f)
+                            {
+                                // Debug.Print("Distance from last collision {0}", cd);
+                                // track collision point
+                                ball.collision_point = ball.position;
+
+                                
+
+                                if (o_left < ball.texture.Width && ball.velocity.X > 0 /*&& (o_left > o_top || o_left > o_bottom))*/ ||
+                                    (o_right < ball.texture.Width && ball.velocity.X < 0 /*&& (o_right > o_top || o_right > o_bottom)*/))
+                                {
+                                    ball.velocity.X *= -1;
+                                }
+
+                                if (o_top < ball.texture.Height && ball.velocity.Y > 0 /*&& (o_top > o_left || o_top > o_right))*/ ||
+                                    (o_bottom < ball.texture.Height && ball.velocity.Y < 0 /*&& (o_bottom > o_left || o_bottom > o_right)*/))
+                                {
+                                    ball.velocity.Y *= -1;
+                                }
                                 // increase Y velocity of ball
                                 if (ball.velocity.Y < 0)
                                 {
@@ -392,30 +436,48 @@ namespace breakout
                                 {
                                     ball.velocity.Y += 0.01f;
                                 }
+                                // play block sound
+                                // Debug.Print("Panning is {0}", fx_pan);
                                 gamecontent.blocksound[block.sound].Play(fx_volume, fx_pitch, fx_pan);
+                                // remove block
                                 level.blocksremove.Add(block);
-                                score += block.scorevalue;
-                                break;
-                            }                             
-                        }                        
-                    }
-                }
+                                // update score
+                                score += block.scorevalue;                                
+                            } // finish collision distance loop
+                        } // finish ball.collide loop
+                    } // finish collision check loop
+
+                } // finish foreach block loop       
+
+                // remove destroyed blocks 
                 foreach (GameObject block in level.blocksremove)
                 {
                     level.blocks.Remove(block);
                 }
+
                 if (level.blocks.Count == 0)
                 {
                     // advance level
                     level.Load();
                 }
             }  
-
+            // remove lost balls
             foreach(GameObject ball in level.ballsremove)
             {
                 level.balls.Remove(ball);
             }
-            if (level.balls.Count == 0)
+            // count collidable balls
+            ballcount = 0;
+            foreach(GameObject ball in level.balls)
+            {
+                if (ball.collide)
+                {
+                    ballcount++;
+                    break;                    
+                }                    
+            }
+            // no more collidables
+            if (ballcount == 0)
             {
                 if (currentstate == gamestate.BallLaunched)
                 {
@@ -428,6 +490,15 @@ namespace breakout
                 }               
             }
         }                
+        private string FindSmallest(float top,float bottom,float left,float right)
+        {
+            if (top < bottom && top < left && top < right) return "top"; 
+            if (bottom < top && bottom < left && bottom < right) return "bottom"; 
+            if (left < top && left < bottom && left < right) return "left";
+            if (right < top && right < bottom && right < left) return "right";
+            // avoid code path error
+            return "";
+        }
 
         private void UpdatePaddle(GameTime gameTime)
         {            

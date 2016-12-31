@@ -98,11 +98,11 @@ namespace breakout
                     {
                         if (cursorindex == 6)
                         {
-                            level.balls.Add(new GameObject(level.cursor[cursorindex].color, level.cursor[cursorindex].texture, level.cursor[cursorindex].editorid, level.cursor[cursorindex].editordesc, level.cursor[cursorindex].position));
+                            level.balls.Add(new GameObject(level.cursor[cursorindex].color, level.cursor[cursorindex].texture, level.cursor[cursorindex].editorid, level.cursor[cursorindex].editordesc, level.cursor[cursorindex].position, level.cursor[cursorindex].sound));
                         }
                         else
                         {
-                            level.blocks.Add(new GameObject(level.cursor[cursorindex].color, level.cursor[cursorindex].texture, level.cursor[cursorindex].editorid, level.cursor[cursorindex].editordesc, level.cursor[cursorindex].position));
+                            level.blocks.Add(new GameObject(level.cursor[cursorindex].color, level.cursor[cursorindex].texture, level.cursor[cursorindex].editorid, level.cursor[cursorindex].editordesc, level.cursor[cursorindex].position, level.cursor[cursorindex].sound));
                         }
                         
                     }

@@ -74,6 +74,9 @@
     <Content Include="Content\Audio\e7.wav" />
     <Content Include="Content\Audio\f7.wav" />
     <Content Include="Content\Audio\g7.wav" />
+    <Content Include="Content\Audio\piano_jazz.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\Graphics\background_lg.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

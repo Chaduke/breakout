@@ -44,13 +44,13 @@ namespace breakout
             ballsremove = new List<GameObject>();
 
             cursor = new GameObject[7];
-            cursor[0] = new GameObject(Color.Red, gamecontent.block_sm, 0, "Block Red");
-            cursor[1] = new GameObject(Color.Orange, gamecontent.block_sm, 1, "Block Orange");
-            cursor[2] = new GameObject(Color.Yellow, gamecontent.block_sm, 2, "Block Yellow");
-            cursor[3] = new GameObject(Color.Green, gamecontent.block_sm, 3, "Block Green");
-            cursor[4] = new GameObject(Color.Blue, gamecontent.block_sm, 4, "Block Blue");
-            cursor[5] = new GameObject(Color.Purple, gamecontent.block_sm, 5, "Block Purple");
-            cursor[6] = new GameObject(Color.Yellow, gamecontent.ball_sm, 6, "Ball Yellow");
+            cursor[0] = new GameObject(Color.Red, gamecontent.block_sm, 0, "Block Red",0);
+            cursor[1] = new GameObject(Color.Orange, gamecontent.block_sm, 1, "Block Orange",1);
+            cursor[2] = new GameObject(Color.Yellow, gamecontent.block_sm, 2, "Block Yellow",2);
+            cursor[3] = new GameObject(Color.Green, gamecontent.block_sm, 3, "Block Green",3);
+            cursor[4] = new GameObject(Color.Blue, gamecontent.block_sm, 4, "Block Blue",4);
+            cursor[5] = new GameObject(Color.Purple, gamecontent.block_sm, 5, "Block Purple",5);
+            cursor[6] = new GameObject(Color.Yellow, gamecontent.ball_sm, 6, "Ball Yellow",0);
             background = gamecontent.background_sm;
         }            
 
@@ -163,7 +163,7 @@ namespace breakout
                             x /= 2;
                             y /= 2;
                         }
-                        GameObject current = new GameObject(cursor[editorid].color, cursor[editorid].texture, editorid, cursor[editorid].editordesc, new Vector2(x, y));
+                        GameObject current = new GameObject(cursor[editorid].color, cursor[editorid].texture, editorid, cursor[editorid].editordesc, new Vector2(x, y),cursor[editorid].sound);
                         if (current.editorid == 6)
                         {
                             current.velocity.X = 2;
