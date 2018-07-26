@@ -4,11 +4,19 @@ using Microsoft.Xna.Framework.Input;
 
 namespace survival_sim
 {
-    /// <summary>
-    /// This is the main type for your game.
-    /// </summary>
+    /*
+     * Survival Simulation
+     * Create a survival type simulation in 2D 
+     * similar to Minecraft / Rimworld
+     */
+
+        // TODO List        
+
     public class survival : Game
     {
+        private int WindowWidth = 1024;
+        private int WindowHeight = 768;
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         private Texture2D dude;
@@ -30,6 +38,9 @@ namespace survival_sim
             // TODO: Add your initialization logic here
 
             base.Initialize();
+            graphics.PreferredBackBufferWidth = WindowWidth;  // set this value to the desired width of your window
+            graphics.PreferredBackBufferHeight = WindowHeight;   // set this value to the desired height of your window
+            graphics.ApplyChanges();
         }
 
         /// <summary>
@@ -79,7 +90,7 @@ namespace survival_sim
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
-            spriteBatch.Draw(dude, new Vector2(0, 0), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(dude, new Vector2(WindowWidth / 2 - dude.Width / 2, WindowHeight / 2 - dude.Height / 2), null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             spriteBatch.End();
             base.Draw(gameTime);
         }
