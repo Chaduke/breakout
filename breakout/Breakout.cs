@@ -108,7 +108,7 @@ namespace breakout
 
             r = new Random();
             
-            fx_volume = 0.0f;
+            fx_volume = 1.0f;
             fx_pitch = -1.0f;
             fx_pan = 0.0f;
 

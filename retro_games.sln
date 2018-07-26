@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2042
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "retro_games", "breakout\breakout.csproj", "{E9698732-17B3-4F9F-B0D8-B76983547BD6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "breakout", "breakout\breakout.csproj", "{E9698732-17B3-4F9F-B0D8-B76983547BD6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "survival_sim", "survival_sim\survival_sim.csproj", "{126A041D-A264-4E3B-A206-3AF384669B5C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,8 +25,19 @@ Global
 		{E9698732-17B3-4F9F-B0D8-B76983547BD6}.Release|x64.ActiveCfg = Release|x86
 		{E9698732-17B3-4F9F-B0D8-B76983547BD6}.Release|x86.ActiveCfg = Release|x86
 		{E9698732-17B3-4F9F-B0D8-B76983547BD6}.Release|x86.Build.0 = Release|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Debug|ARM.ActiveCfg = Debug|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Debug|x64.ActiveCfg = Debug|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Debug|x86.ActiveCfg = Debug|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Debug|x86.Build.0 = Debug|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Release|ARM.ActiveCfg = Release|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Release|x64.ActiveCfg = Release|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Release|x86.ActiveCfg = Release|x86
+		{126A041D-A264-4E3B-A206-3AF384669B5C}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {662115F4-9C6E-447B-B3EF-F3A127F8A6EB}
 	EndGlobalSection
 EndGlobal
